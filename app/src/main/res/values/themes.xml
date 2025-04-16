@@ -1,0 +1,8 @@
+<resources>
+
+    <!-- Use AppCompat theme as a base theme -->
+    <style name="Theme.MyRupees" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Customize your theme here if needed -->
+    </style>
+
+</resources>
