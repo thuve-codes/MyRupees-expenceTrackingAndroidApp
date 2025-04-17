@@ -5,15 +5,46 @@
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="@color/white">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/transactionList"
+    <!-- Balance section -->
+    <LinearLayout
+        android:id="@+id/balance"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_margin="10dp"
+        android:background="@drawable/boxframe"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="16dp">
+        <!-- Add views here for your balance information -->
+    </LinearLayout>
+
+    <!-- ScrollView for the RecyclerView -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/addBtn"
-        android:padding="16dp" />
+        android:layout_below="@id/balance"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="10dp">
 
+        <!-- RecyclerView inside the ScrollView -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/transactionList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- FloatingActionButton -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/addBtn"
         android:layout_width="wrap_content"
@@ -22,4 +53,5 @@
         android:layout_alignParentEnd="true"
         android:layout_margin="16dp"
         app:srcCompat="@drawable/ic_add" />
+
 </RelativeLayout>
