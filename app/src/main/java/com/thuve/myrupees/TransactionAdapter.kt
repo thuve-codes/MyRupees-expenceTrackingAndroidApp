@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 
 class TransactionAdapter(private val transactions: List<Transaction>) :
@@ -24,14 +25,17 @@ class TransactionAdapter(private val transactions: List<Transaction>) :
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val transaction = transactions[position]
         holder.title.text = transaction.title
-        if(transaction.type == "Income"){
-            holder.amount.setTextColor(holder.itemView.context.resources.getColor(R.color.green))
-            holder.amount.text = "Rs. ${transaction.amount}"
-        }else{
-            holder.amount.setTextColor(holder.itemView.context.resources.getColor(R.color.red))
-            holder.amount.text = "Rs. ${transaction.amount}"
-        }
+        holder.amount.text = "Rs. ${transaction.amount}"
         holder.date.text = transaction.date
+
+        // Set color based on transaction type
+        val colorRes = if (transaction.type == "Income") {
+            R.color.green
+        } else {
+            R.color.red
+        }
+
+        holder.amount.setTextColor(ContextCompat.getColor(holder.itemView.context, colorRes))
     }
 
     override fun getItemCount(): Int = transactions.size

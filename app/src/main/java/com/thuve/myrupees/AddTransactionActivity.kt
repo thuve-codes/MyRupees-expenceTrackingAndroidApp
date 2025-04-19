@@ -12,7 +12,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
-
 class AddTransactionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,12 +61,18 @@ class AddTransactionActivity : AppCompatActivity() {
 
         // BottomNavigationView item selection listener
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNav.selectedItemId = R.id.nav_add  // Highlight the 'Add' icon
         bottomNav.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_home -> {
                     startActivity(Intent(this, MainActivity::class.java))
                     true
                 }
+                R.id.nav_transactions -> {
+                    startActivity(Intent(this, TransactionActivity::class.java))
+                    true
+                }
+
                 else -> false
             }
         }

@@ -25,6 +25,7 @@
         </activity>
 
         <activity android:name=".AddTransactionActivity"></activity>
+        <activity android:name=".TransactionActivity"></activity>
 
     </application>
 

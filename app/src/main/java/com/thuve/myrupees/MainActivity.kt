@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
         // Add transaction button
         findViewById<FloatingActionButton>(R.id.addBtn).setOnClickListener {
             startActivity(Intent(this, AddTransactionActivity::class.java))
+            bottomNavigationView.selectedItemId = R.id.nav_add
         }
 
         // Setup BottomNavigationView
@@ -42,12 +43,12 @@ class MainActivity : AppCompatActivity() {
             }.start()
 
             when (menuItem.itemId) {
-                R.id.nav_home -> {
-                    Toast.makeText(this, "Home", Toast.LENGTH_SHORT).show()
-                }
+
                 R.id.nav_transactions -> {
-                    Toast.makeText(this, "Transactions", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, TransactionActivity::class.java))
+                    true
                 }
+
                 R.id.nav_add -> {
                     startActivity(Intent(this, AddTransactionActivity::class.java))
                 }
