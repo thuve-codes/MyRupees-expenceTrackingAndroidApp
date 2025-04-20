@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bgforspalsh"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/heythere"
+        android:layout_width="316dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="94dp"
+        android:fontFamily="@font/fortwc"
+        android:text="HEY THERE,"
+        android:textColor="@color/black"
+        android:textSize="30dp" />
+
+    <TextView
+        android:id="@+id/chief"
+        android:layout_width="273dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/heythere"
+
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="10dp"
+        android:fontFamily="@font/teko"
+        android:text="Welcome Back Chief!!"
+        android:textColor="@color/black"
+        android:textSize="29dp" />
+
+    <TextView
+        android:id="@+id/pickup"
+        android:layout_width="363dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/chief"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="4dp"
+        android:fontFamily="@font/arvo"
+        android:text="Let’s turn your cents into sense\ntrack smarter with MyRupees"
+        android:textColor="@color/black"
+        android:textSize="18dp" />
+
+    <Button
+        android:id="@+id/getstart"
+        android:layout_width="166dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/pickup"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="96dp"
+        android:background="@drawable/button_gradient"
+        android:text="Get Started"
+        android:textColor="@color/white" />
+
+
+</RelativeLayout>

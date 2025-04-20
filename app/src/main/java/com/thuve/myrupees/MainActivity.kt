@@ -50,15 +50,15 @@ class MainActivity : AppCompatActivity() {
             }.start()
 
             when (menuItem.itemId) {
-                R.id.nav_transactions -> {
-                    startActivity(Intent(this, TransactionActivity::class.java))
+                R.id.nav_budget -> {
+                    startActivity(Intent(this, BudgetActivity::class.java))
                     true
                 }
                 R.id.nav_add -> {
                     startActivity(Intent(this, AddTransactionActivity::class.java))
                     true
                 }
-                R.id.nav_categories -> {
+                R.id.nav_recurring -> {
                     Toast.makeText(this, "Categories", Toast.LENGTH_SHORT).show()
                     true
                 }
@@ -139,4 +139,5 @@ class MainActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
         updateBalance()
     }
+
 }

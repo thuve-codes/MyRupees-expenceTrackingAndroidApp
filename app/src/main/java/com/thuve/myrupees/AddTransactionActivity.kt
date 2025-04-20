@@ -89,8 +89,8 @@ class AddTransactionActivity : AppCompatActivity() {
                     startActivity(Intent(this, MainActivity::class.java))
                     true
                 }
-                R.id.nav_transactions -> {
-                    startActivity(Intent(this, TransactionActivity::class.java))
+                R.id.nav_budget -> {
+                    startActivity(Intent(this, BudgetActivity::class.java))
                     true
                 }
                 else -> false

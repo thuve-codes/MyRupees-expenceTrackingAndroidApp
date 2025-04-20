@@ -1,6 +1,7 @@
 package com.thuve.myrupees
 
 import android.app.AlertDialog
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,6 +9,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.RecyclerView
 
 class TransactionAdapter(
@@ -32,7 +34,7 @@ class TransactionAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val transaction = transactions[position]
         holder.title.text = transaction.title
-        holder.amount.text = "Rs. ${transaction.amount}"
+        holder.amount.text = "Rs. %.2f".format(transaction.amount)
         holder.date.text = transaction.date
         holder.category.text = transaction.category
 
@@ -45,30 +47,25 @@ class TransactionAdapter(
         holder.amount.setTextColor(ContextCompat.getColor(holder.itemView.context, colorRes))
 
         holder.deleteBtn.setOnClickListener {
-
-            // Use the context from the itemView (holder)
             val context = holder.itemView.context
-
-            // Create the AlertDialog using the context from the itemView
             val builder = AlertDialog.Builder(context)
-
-            // Set the message and the button actions
             builder.setMessage("Do you want to delete?")
                 .setCancelable(false)
                 .setPositiveButton("Yes") { dialog, id ->
                     transactions.removeAt(position)
                     SharedPrefManager.saveTransactions(context, transactions)
+                    Log.d("TransactionAdapter", "Saved transactions: $transactions")
                     notifyItemRemoved(position)
                     notifyItemRangeChanged(position, transactions.size)
-                    onDelete() // <-- Update balance in MainActivity
+                    onDelete() // Update balance in MainActivity
+                    // Notify BudgetActivity of transaction change
+                    LocalBroadcastManager.getInstance(context)
+                        .sendBroadcast(android.content.Intent("TRANSACTION_UPDATED"))
                     Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
                 }
                 .setNegativeButton("No") { dialog, id ->
-                    // Dismiss the dialog if "No" is clicked
                     dialog.dismiss()
                 }
-
-            // Create and show the dialog
             val alert = builder.create()
             alert.show()
         }
