@@ -1,8 +1,9 @@
+package com.thuve.myrupees
+
 import android.content.Context
 import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.thuve.myrupees.Transaction
 
 object SharedPrefManager {
     private const val PREF_NAME = "myrupees_prefs"
@@ -21,11 +22,5 @@ object SharedPrefManager {
             ?.let { json ->
                 gson.fromJson(json, object : TypeToken<MutableList<Transaction>>() {}.type)
             } ?: mutableListOf()
-    }
-
-    fun clearAllData(context: Context) {
-        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit {
-            clear()
-        }
     }
 }

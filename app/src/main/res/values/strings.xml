@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MyRupees</string>
+    <string name="delete">Delete</string>
+    <string name="recent_transaction">Recent Transaction</string>
 </resources>

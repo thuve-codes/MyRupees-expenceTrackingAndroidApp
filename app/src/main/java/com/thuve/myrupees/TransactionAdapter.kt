@@ -1,19 +1,26 @@
 package com.thuve.myrupees
 
+import android.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 
-class TransactionAdapter(private val transactions: List<Transaction>) :
-    RecyclerView.Adapter<TransactionAdapter.ViewHolder>() {
+class TransactionAdapter(
+    private val transactions: MutableList<Transaction>,
+    private val onDelete: () -> Unit
+) : RecyclerView.Adapter<TransactionAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val title: TextView = itemView.findViewById(R.id.title)
         val amount: TextView = itemView.findViewById(R.id.amount)
         val date: TextView = itemView.findViewById(R.id.date)
+        val category: TextView = itemView.findViewById(R.id.category)
+        val deleteBtn: ImageButton = itemView.findViewById(R.id.deleteBtn)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -27,8 +34,8 @@ class TransactionAdapter(private val transactions: List<Transaction>) :
         holder.title.text = transaction.title
         holder.amount.text = "Rs. ${transaction.amount}"
         holder.date.text = transaction.date
+        holder.category.text = transaction.category
 
-        // Set color based on transaction type
         val colorRes = if (transaction.type == "Income") {
             R.color.green
         } else {
@@ -36,6 +43,35 @@ class TransactionAdapter(private val transactions: List<Transaction>) :
         }
 
         holder.amount.setTextColor(ContextCompat.getColor(holder.itemView.context, colorRes))
+
+        holder.deleteBtn.setOnClickListener {
+
+            // Use the context from the itemView (holder)
+            val context = holder.itemView.context
+
+            // Create the AlertDialog using the context from the itemView
+            val builder = AlertDialog.Builder(context)
+
+            // Set the message and the button actions
+            builder.setMessage("Do you want to delete?")
+                .setCancelable(false)
+                .setPositiveButton("Yes") { dialog, id ->
+                    transactions.removeAt(position)
+                    SharedPrefManager.saveTransactions(context, transactions)
+                    notifyItemRemoved(position)
+                    notifyItemRangeChanged(position, transactions.size)
+                    onDelete() // <-- Update balance in MainActivity
+                    Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("No") { dialog, id ->
+                    // Dismiss the dialog if "No" is clicked
+                    dialog.dismiss()
+                }
+
+            // Create and show the dialog
+            val alert = builder.create()
+            alert.show()
+        }
     }
 
     override fun getItemCount(): Int = transactions.size

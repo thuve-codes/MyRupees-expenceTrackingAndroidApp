@@ -19,7 +19,7 @@ class TransactionActivity : AppCompatActivity() {
 
         val recyclerView = findViewById<RecyclerView>(R.id.transactionList)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = TransactionAdapter(transactionList)
+        adapter = TransactionAdapter(transactionList) { } // Empty lambda
         recyclerView.adapter = adapter
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)

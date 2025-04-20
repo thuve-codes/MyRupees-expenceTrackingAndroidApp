@@ -2,16 +2,12 @@ package com.thuve.myrupees
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.RadioGroup
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.UUID
+import java.util.*
+
 class AddTransactionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,22 +16,28 @@ class AddTransactionActivity : AppCompatActivity() {
 
         val titleInput = findViewById<EditText>(R.id.titleInput)
         val amountInput = findViewById<EditText>(R.id.amountInput)
-        val categoryInput = findViewById<EditText>(R.id.categoryInput)
+        val categorySpinner = findViewById<Spinner>(R.id.categorySpinner)
         val typeGroup = findViewById<RadioGroup>(R.id.typeGroup)
         val saveBtn = findViewById<Button>(R.id.saveBtn)
+
+        // Set up category options for Spinner
+        val categories = listOf("Food", "Transport", "Entertainment", "Shopping", "Savings", "Others")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        categorySpinner.adapter = adapter
 
         // Set default color
         setSaveButtonColor(typeGroup, saveBtn)
 
-        // Listener to update the button color based on type selection
-        typeGroup.setOnCheckedChangeListener { _, checkedId ->
+        // Change button color when income/expense changes
+        typeGroup.setOnCheckedChangeListener { _, _ ->
             setSaveButtonColor(typeGroup, saveBtn)
         }
 
         saveBtn.setOnClickListener {
             val title = titleInput.text.toString()
             val amount = amountInput.text.toString().toDoubleOrNull()
-            val category = categoryInput.text.toString()
+            val category = categorySpinner.selectedItem.toString()
             val type = if (typeGroup.checkedRadioButtonId == R.id.incomeRadio) "Income" else "Expense"
 
             if (title.isEmpty() || amount == null || category.isEmpty()) {
@@ -43,25 +45,44 @@ class AddTransactionActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // Load existing transactions
+            val transactions = SharedPrefManager.loadTransactions(this)
+
+            // Calculate current balance
+            var currentBalance = 0.0
+            for (t in transactions) {
+                currentBalance += if (t.type == "Income") t.amount else -t.amount
+            }
+
+            // Update balance based on new transaction
+            val updatedBalance = if (type == "Income") {
+                currentBalance + amount
+            } else {
+                currentBalance - amount
+            }
+
+            // Create and save transaction
             val transaction = Transaction(
                 UUID.randomUUID().toString(),
                 title,
                 amount,
                 category,
                 SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()),
-                type
+                type,
+                updatedBalance
             )
 
-            val transactions = SharedPrefManager.loadTransactions(this)
             transactions.add(transaction)
             SharedPrefManager.saveTransactions(this, transactions)
 
+            Toast.makeText(this, "Transaction saved", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, MainActivity::class.java))
             finish()
         }
 
-        // BottomNavigationView item selection listener
+        // BottomNavigationView item selection
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNav.selectedItemId = R.id.nav_add  // Highlight the 'Add' icon
+        bottomNav.selectedItemId = R.id.nav_add
         bottomNav.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_home -> {
@@ -72,21 +93,18 @@ class AddTransactionActivity : AppCompatActivity() {
                     startActivity(Intent(this, TransactionActivity::class.java))
                     true
                 }
-
                 else -> false
             }
         }
     }
 
-    // Function to change the button color based on the transaction type
+    // Change Save Button color depending on type
     private fun setSaveButtonColor(typeGroup: RadioGroup, saveBtn: Button) {
         when (typeGroup.checkedRadioButtonId) {
             R.id.incomeRadio -> {
-                // Set the button color to green for income
                 saveBtn.setBackgroundColor(resources.getColor(R.color.green))
             }
             R.id.expenseRadio -> {
-                // Set the button color to red for expense
                 saveBtn.setBackgroundColor(resources.getColor(R.color.red))
             }
         }
