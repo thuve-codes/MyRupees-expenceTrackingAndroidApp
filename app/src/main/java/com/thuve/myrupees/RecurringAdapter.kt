@@ -30,12 +30,14 @@ class RecurringAdapter(
         holder.amount.text = "Rs. %.2f".format(transaction.amount)
         holder.date.text = transaction.scheduledDate
 
-        if (transaction.isPaid || onPaidClick == null) {
+        if (transaction.paid || onPaidClick == null) {
             holder.paidBtn.visibility = View.GONE
         } else {
             holder.paidBtn.visibility = View.VISIBLE
             holder.paidBtn.setOnClickListener {
-                onPaidClick.invoke(transaction)
+                transaction.paid = true  // ✅ Mark as paid
+                notifyItemChanged(position) // 🔄 Update UI
+                onPaidClick.invoke(transaction) // 📤 Trigger callback
             }
         }
     }

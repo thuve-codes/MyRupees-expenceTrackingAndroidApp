@@ -1,6 +1,6 @@
 package com.thuve.myrupees
 
-import android.app.*
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -12,6 +12,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.text.SimpleDateFormat
 import java.util.*
+import com.google.gson.Gson
+import androidx.work.*
+import java.util.concurrent.TimeUnit
 
 class RecurringTransactionActivity : AppCompatActivity() {
 
@@ -29,6 +32,9 @@ class RecurringTransactionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recurring_transactions)
 
+        // Schedule the notification worker
+        WorkManagerScheduler.scheduleRecurringNotificationWorker(this)
+
         // Initialize views
         titleInput = findViewById(R.id.titleInput)
         amountInput = findViewById(R.id.amountInput)
@@ -39,7 +45,7 @@ class RecurringTransactionActivity : AppCompatActivity() {
         recentRecycler = findViewById(R.id.recentRecycler)
         bottomNavigationView = findViewById(R.id.bottom_navigation)
 
-        // Setup bottom nav first!
+        // Bottom navigation
         bottomNavigationView.selectedItemId = R.id.nav_recurring
         bottomNavigationView.setOnItemSelectedListener { menuItem ->
             val view = bottomNavigationView.findViewById<View>(menuItem.itemId)
@@ -64,8 +70,8 @@ class RecurringTransactionActivity : AppCompatActivity() {
             }
         }
 
-        // Load data and setup adapters
-        allTransactions.addAll(SharedPrefManager.loadRecurring(this))
+        // Load saved transactions
+        allTransactions.addAll(SharedPrefManager.loadRecurringTransactions(this))
         setupAdapters()
 
         // Show date picker
@@ -83,7 +89,7 @@ class RecurringTransactionActivity : AppCompatActivity() {
             ).show()
         }
 
-        // Add button click listener
+        // Add new recurring transactions
         addBtn.setOnClickListener {
             try {
                 val title = titleInput.text.toString()
@@ -118,16 +124,16 @@ class RecurringTransactionActivity : AppCompatActivity() {
                         id = UUID.randomUUID().toString(),
                         title = title,
                         amount = amount,
-                        scheduledDate = sdf.format(calendar.time)
+                        scheduledDate = sdf.format(calendar.time),
+                        paid = false
                     )
                     allTransactions.add(recurring)
                     calendar.add(Calendar.MONTH, 1)
                 }
 
-                SharedPrefManager.saveRecurring(this, allTransactions)
+                SharedPrefManager.saveRecurringTransactions(this, allTransactions)
                 setupAdapters()
 
-                // Clear input
                 titleInput.text.clear()
                 amountInput.text.clear()
                 startDateInput.text.clear()
@@ -143,8 +149,8 @@ class RecurringTransactionActivity : AppCompatActivity() {
     }
 
     private fun setupAdapters() {
-        val upcoming = allTransactions.filter { !it.isPaid }
-        val recent = allTransactions.filter { it.isPaid }
+        val upcoming = allTransactions.filter { !it.paid }
+        val recent = allTransactions.filter { it.paid }
 
         upcomingRecycler.layoutManager = LinearLayoutManager(this)
         recentRecycler.layoutManager = LinearLayoutManager(this)
@@ -152,8 +158,8 @@ class RecurringTransactionActivity : AppCompatActivity() {
         upcomingRecycler.adapter = RecurringAdapter(upcoming.toMutableList()) { paidItem ->
             val index = allTransactions.indexOfFirst { it.id == paidItem.id }
             if (index != -1) {
-                allTransactions[index] = allTransactions[index].copy(isPaid = true)
-                SharedPrefManager.saveRecurring(this, allTransactions)
+                allTransactions[index] = allTransactions[index].copy(paid = true)
+                SharedPrefManager.saveRecurringTransactions(this, allTransactions)
                 setupAdapters()
             }
         }

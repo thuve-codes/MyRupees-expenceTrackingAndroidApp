@@ -12,6 +12,7 @@ firebaseCrashlyticsBuildtools = "3.0.3"
 material = "1.12.0"
 recyclerview = "1.4.0"
 common = "18.11.0"
+media3ExoplayerWorkmanager = "1.6.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,6 +33,7 @@ firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "fireb
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 common = { group = "com.google.mlkit", name = "common", version.ref = "common" }
+androidx-media3-exoplayer-workmanager = { group = "androidx.media3", name = "media3-exoplayer-workmanager", version.ref = "media3ExoplayerWorkmanager" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

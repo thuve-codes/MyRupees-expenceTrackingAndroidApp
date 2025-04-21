@@ -1,6 +1,12 @@
 package com.thuve.myrupees
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
@@ -8,10 +14,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.work.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,16 +35,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         balanceTextView = findViewById(R.id.availableBalance)
-
         transactionList = SharedPrefManager.loadTransactions(this)
 
         val recyclerView = findViewById<RecyclerView>(R.id.transactionList)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
         adapter = TransactionAdapter(transactionList) {
             updateBalance()
         }
-
         recyclerView.adapter = adapter
 
         findViewById<FloatingActionButton>(R.id.addBtn).setOnClickListener {
@@ -66,8 +73,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val textViewAddAmount = findViewById<TextView>(R.id.updatebal)
-        textViewAddAmount.setOnClickListener {
+        findViewById<TextView>(R.id.updatebal).setOnClickListener {
             val editTextAmount = EditText(this)
             editTextAmount.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
 
@@ -78,7 +84,6 @@ class MainActivity : AppCompatActivity() {
                 .setPositiveButton("Add") { _, _ ->
                     val amountString = editTextAmount.text.toString()
                     val amount = amountString.toDoubleOrNull() ?: 0.0
-
                     if (amount > 0) {
                         updateBalance(amount)
                         Toast.makeText(this, "Amount Added: Rs. $amount", Toast.LENGTH_SHORT).show()
@@ -87,10 +92,12 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 .setNegativeButton("Cancel", null)
-
             dialogBuilder.create().show()
         }
 
+        createNotificationChannel()
+        scheduleRecurringNotificationWorker(this)
+        requestNotificationPermission()
         updateBalance()
     }
 
@@ -103,34 +110,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateBalance(amount: Double) {
-        // Get current date
         val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-
-        // Calculate the new available balance based on existing transactions
         val currentBalance = transactionList.sumOf {
             if (it.type == "Income") it.amount else -it.amount
         }
         val newBalance = currentBalance + amount
 
-        // Create new Transaction object with all required fields
         val newTransaction = Transaction(
             id = java.util.UUID.randomUUID().toString(),
             title = "Manual Add",
             amount = amount,
-            category = "Manual", // You can customize this
+            category = "Manual",
             date = date,
             type = "Income",
             AvaiBal = newBalance
         )
 
-        // Add transaction and save
         transactionList.add(newTransaction)
         SharedPrefManager.saveTransactions(this, transactionList)
 
         adapter.notifyDataSetChanged()
         updateBalance()
     }
-
 
     override fun onResume() {
         super.onResume()
@@ -140,4 +141,58 @@ class MainActivity : AppCompatActivity() {
         updateBalance()
     }
 
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "MyRupeesChannel"
+            val descriptionText = "Channel for MyRupees recurring notifications"
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel("MYRUPEES_CHANNEL_ID", name, importance).apply {
+                description = descriptionText
+            }
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun scheduleRecurringNotificationWorker(context: Context) {
+        val request = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
+            .setInitialDelay(0, TimeUnit.SECONDS) // Immediate first run
+            .build()
+
+        WorkManager.getInstance(context).enqueue(request)
+
+        // Reschedule the worker every 3 seconds
+        val periodicWorkRequest = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
+            .setInitialDelay(3, TimeUnit.SECONDS)
+            .build()
+
+        // Enqueue the worker with a custom retry mechanism to keep running every 3 seconds
+        WorkManager.getInstance(context).getWorkInfoByIdLiveData(request.id).observe(this) { workInfo ->
+            if (workInfo != null && workInfo.state.isFinished) {
+                // Reschedule every 3 seconds
+                WorkManager.getInstance(context).enqueue(periodicWorkRequest)
+            }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    1001
+                )
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1001 && grantResults.isNotEmpty() && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
 }

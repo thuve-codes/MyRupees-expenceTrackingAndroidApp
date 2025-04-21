@@ -51,7 +51,8 @@ dependencies {
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.material) // Verify version in libs.versions.toml
     implementation(libs.androidx.recyclerview)
-    implementation(libs.common) // Verify what this is
+    implementation(libs.common)
+    implementation(libs.androidx.media3.exoplayer.workmanager) // Verify what this is
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -63,4 +64,10 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+
+
+    implementation ("androidx.work:work-runtime-ktx:2.9.0")
+    implementation ("com.google.code.gson:gson:2.10.1")
+
+
 }
