@@ -5,18 +5,43 @@
     android:background="@drawable/bgforspalsh"
     android:padding="16dp">
 
+    <ImageView
+        android:layout_width="112dp"
+        android:layout_height="88dp"
+        android:layout_alignBottom="@+id/chief"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="284dp"
+        android:layout_marginTop="11dp"
+        android:layout_marginBottom="143dp"
+        android:src="@drawable/logoround" />
+
     <TextView
         android:id="@+id/heythere"
         android:layout_width="316dp"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="94dp"
+        android:layout_marginStart="26dp"
+        android:layout_marginTop="162dp"
         android:fontFamily="@font/fortwc"
         android:text="HEY THERE,"
         android:textColor="@color/black"
         android:textSize="30dp" />
+
+    <TextView
+        android:id="@+id/pickup"
+        android:layout_width="363dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/chief"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="26dp"
+        android:layout_marginTop="4dp"
+        android:fontFamily="@font/arvo"
+        android:text="Let’s turn your cents into sense\ntrack smarter with MyRupees"
+        android:textColor="@color/black"
+        android:textSize="18dp" />
 
     <TextView
         android:id="@+id/chief"
@@ -25,24 +50,12 @@
         android:layout_below="@+id/heythere"
 
         android:layout_alignParentStart="true"
-        android:layout_marginStart="10dp"
+        android:layout_marginStart="26dp"
+        android:layout_marginTop="0dp"
         android:fontFamily="@font/teko"
         android:text="Welcome Back Chief!!"
         android:textColor="@color/black"
         android:textSize="29dp" />
-
-    <TextView
-        android:id="@+id/pickup"
-        android:layout_width="363dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/chief"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="4dp"
-        android:fontFamily="@font/arvo"
-        android:text="Let’s turn your cents into sense\ntrack smarter with MyRupees"
-        android:textColor="@color/black"
-        android:textSize="18dp" />
 
     <Button
         android:id="@+id/getstart"
@@ -50,8 +63,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/pickup"
         android:layout_alignParentStart="true"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="96dp"
+        android:layout_marginStart="27dp"
+        android:layout_marginTop="62dp"
         android:background="@drawable/button_gradient"
         android:text="Get Started"
         android:textColor="@color/white" />

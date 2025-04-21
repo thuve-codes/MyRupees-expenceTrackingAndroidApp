@@ -12,6 +12,8 @@ object SharedPrefManager {
     private const val KEY_BUDGET = "budget"
     private const val KEY_NOTIFICATION_90 = "notified_90_percent"
     private const val KEY_NOTIFICATION_100 = "notified_100_percent"
+    private const val KEY_RECURRING_UPCOMING = "recurring_upcoming"
+    private const val KEY_RECURRING_RECENT = "recurring_recent"
     private val gson = Gson()
 
     // Save transactions to SharedPreferences
@@ -74,4 +76,21 @@ object SharedPrefManager {
         Log.d("SharedPrefManager", "Loaded notification state: $prefKey = $state")
         return state
     }
+    private const val KEY_RECURRING_TRANSACTIONS = "recurring_transactions"
+
+    fun saveRecurring(context: Context, transactions: List<RecurringTransaction>) {
+        val json = gson.toJson(transactions)
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit {
+            putString(KEY_RECURRING_TRANSACTIONS, json)
+        }
+    }
+
+    fun loadRecurring(context: Context): MutableList<RecurringTransaction> {
+        val json = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_RECURRING_TRANSACTIONS, null)
+        return json?.let {
+            gson.fromJson(it, object : TypeToken<MutableList<RecurringTransaction>>() {}.type)
+        } ?: mutableListOf()
+    }
+
 }

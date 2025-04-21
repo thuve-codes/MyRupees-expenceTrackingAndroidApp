@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_recurring -> {
-                    Toast.makeText(this, "Categories", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, RecurringTransactionActivity::class.java))
                     true
                 }
                 else -> false

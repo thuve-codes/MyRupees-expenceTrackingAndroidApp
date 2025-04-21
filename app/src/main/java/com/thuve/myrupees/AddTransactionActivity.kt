@@ -93,6 +93,12 @@ class AddTransactionActivity : AppCompatActivity() {
                     startActivity(Intent(this, BudgetActivity::class.java))
                     true
                 }
+
+                R.id.nav_recurring -> {
+                    startActivity(Intent(this, RecurringTransactionActivity::class.java))
+                    true
+                }
+
                 else -> false
             }
         }

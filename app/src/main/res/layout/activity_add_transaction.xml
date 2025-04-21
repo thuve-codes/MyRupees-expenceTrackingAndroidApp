@@ -93,7 +93,7 @@
                 android:layout_height="48dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/rounded_spinner_background"
-                android:popupBackground="@drawable/spinner_popup_background"
+                android:popupBackground="#EE262626"
                 android:spinnerMode="dropdown" />
 
             <!-- Type (Income/Expense) -->
