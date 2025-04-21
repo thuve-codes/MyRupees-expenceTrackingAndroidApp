@@ -1,8 +1,13 @@
 package com.thuve.myrupees
 
+import android.content.ContentValues
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.text.SimpleDateFormat
@@ -10,6 +15,7 @@ import java.util.*
 
 class AddTransactionActivity : AppCompatActivity() {
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_transaction)
@@ -19,20 +25,16 @@ class AddTransactionActivity : AppCompatActivity() {
         val categorySpinner = findViewById<Spinner>(R.id.categorySpinner)
         val typeGroup = findViewById<RadioGroup>(R.id.typeGroup)
         val saveBtn = findViewById<Button>(R.id.saveBtn)
+        val exportBtn = findViewById<Button>(R.id.exportButton)
 
-        // Set up category options for Spinner
+        // Set up category spinner
         val categories = listOf("Food", "Transport", "Entertainment", "Shopping", "Savings", "Others")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         categorySpinner.adapter = adapter
 
-        // Set default color
         setSaveButtonColor(typeGroup, saveBtn)
-
-        // Change button color when income/expense changes
-        typeGroup.setOnCheckedChangeListener { _, _ ->
-            setSaveButtonColor(typeGroup, saveBtn)
-        }
+        typeGroup.setOnCheckedChangeListener { _, _ -> setSaveButtonColor(typeGroup, saveBtn) }
 
         saveBtn.setOnClickListener {
             val title = titleInput.text.toString()
@@ -45,23 +47,10 @@ class AddTransactionActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Load existing transactions
             val transactions = SharedPrefManager.loadTransactions(this)
+            val currentBalance = transactions.sumOf { if (it.type == "Income") it.amount else -it.amount }
+            val updatedBalance = if (type == "Income") currentBalance + amount else currentBalance - amount
 
-            // Calculate current balance
-            var currentBalance = 0.0
-            for (t in transactions) {
-                currentBalance += if (t.type == "Income") t.amount else -t.amount
-            }
-
-            // Update balance based on new transaction
-            val updatedBalance = if (type == "Income") {
-                currentBalance + amount
-            } else {
-                currentBalance - amount
-            }
-
-            // Create and save transaction
             val transaction = Transaction(
                 UUID.randomUUID().toString(),
                 title,
@@ -80,7 +69,55 @@ class AddTransactionActivity : AppCompatActivity() {
             finish()
         }
 
-        // BottomNavigationView item selection
+        // Export and share functionality
+        exportBtn.setOnClickListener {
+            val transactions = SharedPrefManager.loadTransactions(this)
+
+            if (transactions.isEmpty()) {
+                Toast.makeText(this, "No transactions to export", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Save to Downloads folder using MediaStore for Android 10+ (Scoped Storage)
+            val fileName = "MyRupees_Transactions.txt"
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)  // Set file name
+                put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")  // Set MIME type
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "${android.os.Environment.DIRECTORY_DOWNLOADS}")  // Save in Downloads folder
+            }
+
+            val contentResolver = contentResolver
+            val uri: Uri? = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+
+            uri?.let {
+                try {
+                    // Open OutputStream for the file URI
+                    val outputStream = contentResolver.openOutputStream(it)
+                    outputStream?.use { writer ->
+                        writer.write("ID, Title, Amount, Category, Date, Type, Available Balance\n".toByteArray())
+                        for (t in transactions) {
+                            writer.write("${t.id}, ${t.title}, ${t.amount}, ${t.category}, ${t.date}, ${t.type}, ${t.AvaiBal}\n".toByteArray())
+                        }
+                    }
+
+                    // Inform the user that the file has been saved
+                    Toast.makeText(this, "Transactions exported to Downloads", Toast.LENGTH_SHORT).show()
+
+                    // Optionally, share the file
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_STREAM, it)  // File URI to share
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+
+                    startActivity(Intent.createChooser(shareIntent, "Share transactions via"))
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Error saving file: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // Bottom navigation
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.selectedItemId = R.id.nav_add
         bottomNav.setOnItemSelectedListener { menuItem ->
@@ -93,26 +130,19 @@ class AddTransactionActivity : AppCompatActivity() {
                     startActivity(Intent(this, BudgetActivity::class.java))
                     true
                 }
-
                 R.id.nav_recurring -> {
                     startActivity(Intent(this, RecurringTransactionActivity::class.java))
                     true
                 }
-
                 else -> false
             }
         }
     }
 
-    // Change Save Button color depending on type
     private fun setSaveButtonColor(typeGroup: RadioGroup, saveBtn: Button) {
         when (typeGroup.checkedRadioButtonId) {
-            R.id.incomeRadio -> {
-                saveBtn.setBackgroundColor(resources.getColor(R.color.green))
-            }
-            R.id.expenseRadio -> {
-                saveBtn.setBackgroundColor(resources.getColor(R.color.red))
-            }
+            R.id.incomeRadio -> saveBtn.setBackgroundColor(resources.getColor(R.color.green))
+            R.id.expenseRadio -> saveBtn.setBackgroundColor(resources.getColor(R.color.red))
         }
     }
 }

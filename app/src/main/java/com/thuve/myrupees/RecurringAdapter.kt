@@ -35,7 +35,7 @@ class RecurringAdapter(
         } else {
             holder.paidBtn.visibility = View.VISIBLE
             holder.paidBtn.setOnClickListener {
-                onPaidClick?.invoke(transaction)
+                onPaidClick.invoke(transaction)
             }
         }
     }

@@ -56,7 +56,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/edit_text_background"
-                    android:hint="Title"
+                    android:hint="@string/title"
                     android:fontFamily="sans-serif-medium"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
@@ -76,7 +76,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/edit_text_background"
-                    android:hint="Amount"
+                    android:hint="@string/amount"
                     android:inputType="numberDecimal"
                     android:fontFamily="sans-serif-medium"
                     android:paddingStart="16dp"
@@ -113,7 +113,7 @@
                     android:background="@drawable/radio_background"
                     android:buttonTint="#6200EA"
                     android:gravity="center"
-                    android:text="Income"
+                    android:text="@string/income"
                     android:fontFamily="sans-serif-medium"
                     android:textColor="@color/black" />
 
@@ -125,7 +125,7 @@
                     android:background="@drawable/radio_background"
                     android:buttonTint="#6200EA"
                     android:gravity="center"
-                    android:text="Expense"
+                    android:text="@string/expense"
                     android:fontFamily="sans-serif-medium"
                     android:textColor="@color/black" />
             </RadioGroup>
@@ -141,7 +141,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:scaleX="1.0"
                 android:scaleY="1.0"
-                android:text="Save"
+                android:text="@string/save"
                 android:textColor="@android:color/white"
                 android:textStyle="bold"
                 app:backgroundTint="@null"
@@ -151,6 +151,18 @@
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
+
+    <Button
+        android:id="@+id/exportButton"
+        android:layout_width="168dp"
+        android:layout_height="48dp"
+        android:background="@drawable/button_gradient"
+        android:text="@string/export"
+        android:textColor="@android:color/white"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_navigation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/formContainer" />
 
     <!-- BottomNavigationView -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

@@ -2,4 +2,10 @@
     <string name="app_name">MyRupees</string>
     <string name="delete">Delete</string>
     <string name="recent_transaction">Recent Transaction</string>
+    <string name="export">Export Transaction</string>
+    <string name="save">Save</string>
+    <string name="expense">Expense</string>
+    <string name="income">Income</string>
+    <string name="amount">Amount</string>
+    <string name="title">Title</string>
 </resources>
