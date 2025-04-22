@@ -33,7 +33,6 @@ class RecurringTransactionActivity : AppCompatActivity() {
         setContentView(R.layout.activity_recurring_transactions)
 
         // Schedule the notification worker
-        WorkManagerScheduler.scheduleRecurringNotificationWorker(this)
 
         // Initialize views
         titleInput = findViewById(R.id.titleInput)

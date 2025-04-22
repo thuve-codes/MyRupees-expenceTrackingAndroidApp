@@ -5,6 +5,6 @@ data class RecurringTransaction(
     val title: String,
     val amount: Double,
     val scheduledDate: String,
-    var paid: Boolean = false  // ✅ Add this line if it's missing
+    var paid: Boolean = false
 )
 

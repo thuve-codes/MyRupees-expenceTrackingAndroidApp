@@ -8,4 +8,10 @@
     <string name="income">Income</string>
     <string name="amount">Amount</string>
     <string name="title">Title</string>
+    <string name="hey_there">HEY THERE,</string>
+    <string name="let_s_turn_your_cents">Let’s turn your cents into sense\ntrack smarter with MyRupees</string>
+    <string name="welcome_back_chief">Welcome Back Chief!!</string>
+    <string name="get_started">Get Started</string>
+    <string name="available_balance">Available Balance</string>
+    <string name="update_balance">Update Balance</string>
 </resources>

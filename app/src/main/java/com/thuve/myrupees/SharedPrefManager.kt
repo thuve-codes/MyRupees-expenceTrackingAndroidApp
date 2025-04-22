@@ -9,9 +9,11 @@ import com.google.gson.reflect.TypeToken
 object SharedPrefManager {
     private const val PREF_NAME = "myrupees_prefs"
     private const val KEY_TRANSACTIONS = "transactions"
-    private const val KEY_BUDGET = "budget"
+
+   /* private const val KEY_BUDGET = "budget"
     private const val KEY_NOTIFICATION_90 = "notified_90_percent"
-    private const val KEY_NOTIFICATION_100 = "notified_100_percent"
+    private const val KEY_NOTIFICATION_100 = "notified_100_percent"*/
+
     private const val KEY_RECURRING_TRANSACTIONS = "recurring_transactions"
 
     private val gson = Gson()
@@ -34,6 +36,10 @@ object SharedPrefManager {
         } ?: mutableListOf()
     }
 
+
+
+
+/*
     // --------------------- Budget ---------------------
     fun setBudget(context: Context, budget: Double) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit {
@@ -73,6 +79,11 @@ object SharedPrefManager {
         Log.d("SharedPrefManager", "Loaded notification state: $prefKey = $state")
         return state
     }
+*/
+
+
+
+
 
     // --------------------- Recurring Transactions ---------------------
     fun saveRecurringTransactions(context: Context, transactions: List<RecurringTransaction>) {

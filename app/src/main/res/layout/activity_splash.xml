@@ -26,7 +26,7 @@
         android:layout_marginStart="26dp"
         android:layout_marginTop="162dp"
         android:fontFamily="@font/fortwc"
-        android:text="HEY THERE,"
+        android:text="@string/hey_there"
         android:textColor="@color/black"
         android:textSize="30dp" />
 
@@ -39,7 +39,7 @@
         android:layout_marginStart="26dp"
         android:layout_marginTop="4dp"
         android:fontFamily="@font/arvo"
-        android:text="Let’s turn your cents into sense\ntrack smarter with MyRupees"
+        android:text="@string/let_s_turn_your_cents"
         android:textColor="@color/black"
         android:textSize="18dp" />
 
@@ -53,7 +53,7 @@
         android:layout_marginStart="26dp"
         android:layout_marginTop="0dp"
         android:fontFamily="@font/teko"
-        android:text="Welcome Back Chief!!"
+        android:text="@string/welcome_back_chief"
         android:textColor="@color/black"
         android:textSize="29dp" />
 
@@ -66,7 +66,7 @@
         android:layout_marginStart="27dp"
         android:layout_marginTop="62dp"
         android:background="@drawable/button_gradient"
-        android:text="Get Started"
+        android:text="@string/get_started"
         android:textColor="@color/white" />
 
 

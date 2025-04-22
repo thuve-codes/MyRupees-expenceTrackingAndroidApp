@@ -36,6 +36,7 @@ object NotificationHelper {
             .setAutoCancel(true)
 
         // Show notification only if permission is granted (for Android 13+)
+        //TIRAMISU=Android 13
         with(NotificationManagerCompat.from(context)) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                 ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED

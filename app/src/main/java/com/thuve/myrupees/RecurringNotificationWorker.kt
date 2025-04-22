@@ -48,11 +48,10 @@ class RecurringNotificationWorker(
             NotificationHelper.showNotification(
                 applicationContext,
                 "Upcoming Payment",
-                "You have ${upcomingList.size} unpaid recurring transaction(s) due within 10 days."
+                "You have ${upcomingList.size} unpaid recurring transaction(s) due within days."
             )
         }
 
-        // 🔁 Schedule next run in 10 seconds
         scheduleNextRun()
         return Result.success()
     }

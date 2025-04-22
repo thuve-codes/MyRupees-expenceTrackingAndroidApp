@@ -35,9 +35,9 @@ class RecurringAdapter(
         } else {
             holder.paidBtn.visibility = View.VISIBLE
             holder.paidBtn.setOnClickListener {
-                transaction.paid = true  // ✅ Mark as paid
-                notifyItemChanged(position) // 🔄 Update UI
-                onPaidClick.invoke(transaction) // 📤 Trigger callback
+                transaction.paid = true
+                notifyItemChanged(position)
+                onPaidClick.invoke(transaction)
             }
         }
     }
