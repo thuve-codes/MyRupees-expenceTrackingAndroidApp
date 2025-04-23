@@ -84,6 +84,7 @@ class MainActivity : AppCompatActivity() {
                 .setPositiveButton("Add") { _, _ ->
                     val amountString = editTextAmount.text.toString()
                     val amount = amountString.toDoubleOrNull() ?: 0.0
+                    //Validation
                     if (amount > 0) {
                         updateBalance(amount)
                         Toast.makeText(this, "Amount Added: Rs. $amount", Toast.LENGTH_SHORT).show()

@@ -41,7 +41,7 @@
                 android:background="@drawable/edittext_background"
                 android:padding="10dp"
                 android:textColor="@color/black"
-                android:hint="Enter title"
+                android:hint="@string/enter_title"
                 android:layout_marginBottom="12dp"/>
 
             <!-- Amount -->
@@ -59,7 +59,7 @@
                 android:background="@drawable/edittext_background"
                 android:padding="10dp"
                 android:textColor="@color/black"
-                android:hint="Enter amount"
+                android:hint="@string/enter_amount"
                 android:inputType="numberDecimal"
                 android:layout_marginBottom="12dp"/>
 
@@ -67,7 +67,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Start Date (yyyy-MM-dd)"
+                android:text="@string/start_date_yyyy_mm_dd"
                 android:textSize="14sp"
                 android:textColor="@color/black" />
 
@@ -78,7 +78,7 @@
                 android:background="@drawable/edittext_background"
                 android:padding="10dp"
                 android:textColor="@color/black"
-                android:hint="e.g. 2025-04-21"
+                android:hint="@string/e_g_2025_04_21"
                 android:inputType="date"
                 android:layout_marginBottom="12dp"/>
 
@@ -86,7 +86,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Number of Months"
+                android:text="@string/number_of_months"
                 android:textSize="14sp"
                 android:textColor="@color/black" />
 
@@ -96,7 +96,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/edittext_background"
                 android:padding="10dp"
-                android:hint="e.g. 6"
+                android:hint="@string/e_g_6"
                 android:textColor="@color/black"
                 android:inputType="number"
                 android:layout_marginBottom="16dp"/>
@@ -106,7 +106,7 @@
                 android:id="@+id/addRecurringBtn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Add Recurring Transaction"
+                android:text="@string/add_recurring_transaction"
                 android:background="@drawable/button_gradient"
                 android:textColor="@android:color/white"
                 android:layout_marginTop="8dp"/>
@@ -115,7 +115,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Upcoming Recurring Transactions"
+                android:text="@string/upcoming_recurring_transactions"
                 android:textStyle="bold"
                 android:textSize="16sp"
                 android:layout_marginTop="24dp"
@@ -132,7 +132,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Recent Paid Transactions"
+                android:text="@string/recent_paid_transactions"
                 android:textStyle="bold"
                 android:textSize="16sp"
                 android:layout_marginTop="24dp"
