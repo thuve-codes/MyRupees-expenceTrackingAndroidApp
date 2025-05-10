@@ -31,4 +31,6 @@
     <string name="current_budget_rs_0">Current Budget: Rs 0</string>
     <string name="total_expenses_rs_0">Total Expenses: Rs 0</string>
     <string name="_0_spent">0% Spent</string>
+    <string name="Edit">Edit</string>
+    <string name="edit">Edit</string>
 </resources>

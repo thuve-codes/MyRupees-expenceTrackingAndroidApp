@@ -10,17 +10,21 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.work.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
@@ -39,9 +43,18 @@ class MainActivity : AppCompatActivity() {
 
         val recyclerView = findViewById<RecyclerView>(R.id.transactionList)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = TransactionAdapter(transactionList) {
-            updateBalance()
-        }
+        adapter = TransactionAdapter(
+            transactions = transactionList,
+            onDelete = {
+                updateBalance()
+                // Notify other activities of transaction change
+                LocalBroadcastManager.getInstance(this)
+                    .sendBroadcast(Intent("TRANSACTION_UPDATED"))
+            },
+            onEdit = { transaction, position ->
+                showEditDialog(transaction, position)
+            }
+        )
         recyclerView.adapter = adapter
 
         findViewById<FloatingActionButton>(R.id.addBtn).setOnClickListener {
@@ -74,26 +87,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<TextView>(R.id.updatebal).setOnClickListener {
-            val editTextAmount = EditText(this)
-            editTextAmount.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-
-            val dialogBuilder = AlertDialog.Builder(this)
-                .setTitle("Add Amount")
-                .setMessage("Please enter the amount:")
-                .setView(editTextAmount)
-                .setPositiveButton("Add") { _, _ ->
-                    val amountString = editTextAmount.text.toString()
-                    val amount = amountString.toDoubleOrNull() ?: 0.0
-                    //Validation
-                    if (amount > 0) {
-                        updateBalance(amount)
-                        Toast.makeText(this, "Amount Added: Rs. $amount", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "Please enter a valid amount.", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                .setNegativeButton("Cancel", null)
-            dialogBuilder.create().show()
+            showAddAmountDialog()
         }
 
         createNotificationChannel()
@@ -102,23 +96,93 @@ class MainActivity : AppCompatActivity() {
         updateBalance()
     }
 
+    private fun showEditDialog(transaction: Transaction, position: Int) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_edit_transaction, null)
+
+        dialogView.findViewById<EditText>(R.id.editTitle).setText(transaction.title)
+        dialogView.findViewById<EditText>(R.id.editAmount).setText(transaction.amount.toString())
+        dialogView.findViewById<EditText>(R.id.editCategory).setText(transaction.category)
+
+        val typeRadioGroup = dialogView.findViewById<RadioGroup>(R.id.typeRadioGroup)
+        if (transaction.type == "Income") {
+            typeRadioGroup.check(R.id.incomeRadio)
+        } else {
+            typeRadioGroup.check(R.id.expenseRadio)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Edit Transaction")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val title = dialogView.findViewById<EditText>(R.id.editTitle).text.toString()
+                val amount = dialogView.findViewById<EditText>(R.id.editAmount).text.toString().toDoubleOrNull() ?: 0.0
+                val category = dialogView.findViewById<EditText>(R.id.editCategory).text.toString()
+                val type = if (typeRadioGroup.checkedRadioButtonId == R.id.incomeRadio) "Income" else "Expense"
+
+                if (title.isBlank() || amount <= 0 || category.isBlank()) {
+                    Toast.makeText(this, "Please fill all fields correctly", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                val updatedTransaction = transaction.copy(
+                    title = title,
+                    amount = amount,
+                    category = category,
+                    type = type
+                )
+
+                transactionList[position] = updatedTransaction
+                SharedPrefManager.saveTransactions(this, transactionList)
+                adapter.notifyItemChanged(position)
+                updateBalance()
+
+                // Notify other activities of transaction change
+                LocalBroadcastManager.getInstance(this)
+                    .sendBroadcast(Intent("TRANSACTION_UPDATED"))
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showAddAmountDialog() {
+        val editTextAmount = EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Add Amount")
+            .setMessage("Please enter the amount:")
+            .setView(editTextAmount)
+            .setPositiveButton("Add") { _, _ ->
+                val amountString = editTextAmount.text.toString()
+                val amount = amountString.toDoubleOrNull() ?: 0.0
+                if (amount > 0) {
+                    updateBalance(amount)
+                    Toast.makeText(this, "Amount Added: Rs. $amount", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Please enter a valid amount.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun updateBalance() {
-        val transactions = SharedPrefManager.loadTransactions(this)
-        val balance = transactions.sumOf {
+        val balance = transactionList.sumOf {
             if (it.type == "Income") it.amount else -it.amount
         }
         balanceTextView.text = "Rs. %.2f".format(balance)
     }
 
     private fun updateBalance(amount: Double) {
-        val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val currentBalance = transactionList.sumOf {
             if (it.type == "Income") it.amount else -it.amount
         }
         val newBalance = currentBalance + amount
 
         val newTransaction = Transaction(
-            id = java.util.UUID.randomUUID().toString(),
+            id = UUID.randomUUID().toString(),
             title = "Manual Add",
             amount = amount,
             category = "Manual",
@@ -129,15 +193,15 @@ class MainActivity : AppCompatActivity() {
 
         transactionList.add(newTransaction)
         SharedPrefManager.saveTransactions(this, transactionList)
-
-        adapter.notifyDataSetChanged()
+        adapter.notifyItemInserted(transactionList.size - 1)
         updateBalance()
     }
 
     override fun onResume() {
         super.onResume()
+        val updatedTransactions = SharedPrefManager.loadTransactions(this)
         transactionList.clear()
-        transactionList.addAll(SharedPrefManager.loadTransactions(this))
+        transactionList.addAll(updatedTransactions)
         adapter.notifyDataSetChanged()
         updateBalance()
     }
@@ -157,20 +221,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun scheduleRecurringNotificationWorker(context: Context) {
         val request = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
-            .setInitialDelay(0, TimeUnit.SECONDS) // Immediate first run
+            .setInitialDelay(0, TimeUnit.SECONDS)
             .build()
 
         WorkManager.getInstance(context).enqueue(request)
 
-        // Reschedule the worker every 3 seconds
         val periodicWorkRequest = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
             .setInitialDelay(3, TimeUnit.SECONDS)
             .build()
 
-        // Enqueue the worker with a custom retry mechanism to keep running every 3 seconds
         WorkManager.getInstance(context).getWorkInfoByIdLiveData(request.id).observe(this) { workInfo ->
             if (workInfo != null && workInfo.state.isFinished) {
-                // Reschedule every 3 seconds
                 WorkManager.getInstance(context).enqueue(periodicWorkRequest)
             }
         }

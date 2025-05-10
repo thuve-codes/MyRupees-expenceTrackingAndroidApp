@@ -14,7 +14,8 @@ import androidx.recyclerview.widget.RecyclerView
 
 class TransactionAdapter(
     private val transactions: MutableList<Transaction>,
-    private val onDelete: () -> Unit
+    private val onDelete: () -> Unit,
+    private val onEdit: (Transaction, Int) -> Unit // Add this parameter for edit callback
 ) : RecyclerView.Adapter<TransactionAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -23,6 +24,7 @@ class TransactionAdapter(
         val date: TextView = itemView.findViewById(R.id.date)
         val category: TextView = itemView.findViewById(R.id.category)
         val deleteBtn: ImageButton = itemView.findViewById(R.id.deleteBtn)
+        val editBtn: ImageButton = itemView.findViewById(R.id.editBtn)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -69,7 +71,18 @@ class TransactionAdapter(
             val alert = builder.create()
             alert.show()
         }
+
+        // Add this for edit button functionality
+        holder.editBtn.setOnClickListener {
+            onEdit(transaction, position) // Call the edit callback with the transaction and position
+        }
     }
 
     override fun getItemCount(): Int = transactions.size
+
+    // Add this function to update a transaction
+    fun updateTransaction(position: Int, updatedTransaction: Transaction) {
+        transactions[position] = updatedTransaction
+        notifyItemChanged(position)
+    }
 }
