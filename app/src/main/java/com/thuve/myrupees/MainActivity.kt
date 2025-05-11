@@ -50,10 +50,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        lifecycleScope.launch {
-            migrateSharedPrefsToRoom(this@MainActivity, DatabaseProvider.getDatabase(this@MainActivity).transactionDao())
-        }
-
         welcomeTextView = findViewById(R.id.welcomeUser)
         welcomeTextView.text = "Welcome, ${getCurrentUser()}"
 
@@ -64,10 +60,11 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = TransactionAdapter(
             transactions = transactionList,
-            onDelete = {
-                updateBalance()
+            onDelete = { transaction ->
+                viewModel.deleteTransaction(transaction)
                 LocalBroadcastManager.getInstance(this).sendBroadcast(Intent("TRANSACTION_UPDATED"))
-            },
+            }
+            ,
             onEdit = { transaction, position ->
                 showEditDialog(transaction, position)
             }
@@ -204,21 +201,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun scheduleRecurringNotificationWorker(context: Context) {
-        val request = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
-            .setInitialDelay(0, TimeUnit.SECONDS)
-            .build()
-
-        WorkManager.getInstance(context).enqueue(request)
-
-        val periodicRequest = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
+        val workRequest = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
             .setInitialDelay(3, TimeUnit.SECONDS)
             .build()
 
-        WorkManager.getInstance(context).getWorkInfoByIdLiveData(request.id).observe(this) { workInfo ->
-            if (workInfo != null && workInfo.state.isFinished) {
-                WorkManager.getInstance(context).enqueue(periodicRequest)
-            }
-        }
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "recurringNotificationWork",
+            androidx.work.ExistingWorkPolicy.REPLACE,
+            workRequest
+        )
     }
 
     private fun requestNotificationPermission() {

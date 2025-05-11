@@ -4,11 +4,11 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Delete
+import androidx.room.OnConflictStrategy
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
-    // Transactions
     @Query("SELECT * FROM transactions WHERE user = :user ORDER BY date DESC")
     fun getAllTransactions(user: String): Flow<List<Transaction>>
 
@@ -21,7 +21,6 @@ interface TransactionDao {
     @Delete
     suspend fun deleteTransaction(transaction: Transaction)
 
-    // Recurring Transactions
     @Query("SELECT * FROM recurring_transactions WHERE user = :user ORDER BY scheduledDate DESC")
     fun getAllRecurringTransactions(user: String): Flow<List<RecurringTransaction>>
 
@@ -40,11 +39,10 @@ interface TransactionDao {
     @Delete
     suspend fun deleteRecurringTransaction(recurringTransaction: RecurringTransaction)
 
-    // Budget
     @Query("SELECT * FROM budgets WHERE user = :user")
     suspend fun getBudget(user: String): Budget?
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBudget(budget: Budget)
 
     @Update
@@ -53,10 +51,10 @@ interface TransactionDao {
     @Delete
     suspend fun deleteBudget(budget: Budget)
 
-    // Feedback
     @Query("SELECT * FROM feedbacks ORDER BY timestamp DESC")
     fun getAllFeedbacks(): Flow<List<Feedback>>
 
     @Insert
     suspend fun insertFeedback(feedback: Feedback)
+
 }

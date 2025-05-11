@@ -11,11 +11,12 @@ import android.view.View
 import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.util.*
-import kotlinx.coroutines.runBlocking
 
 class BudgetActivity : AppCompatActivity() {
 
@@ -49,9 +50,12 @@ class BudgetActivity : AppCompatActivity() {
         createNotificationChannel()
 
         val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
-        val savedBudget = runBlocking { viewModel.getBudget() }
-        if (savedBudget?.month != currentMonth) {
-            runBlocking { viewModel.insertBudget(Budget(getCurrentUser(), 0.0, currentMonth)) }
+        lifecycleScope.launch {
+            val savedBudget = viewModel.getBudget()
+            if (savedBudget?.month != currentMonth) {
+                viewModel.insertBudget(Budget(getCurrentUser(), 0.0, currentMonth))
+            }
+            refreshExpenses(savedBudget?.amount)
         }
 
         bottomNavigationView.selectedItemId = R.id.nav_budget
@@ -76,23 +80,23 @@ class BudgetActivity : AppCompatActivity() {
             val newBudget = budgetInput.toDoubleOrNull()
 
             if (newBudget != null && newBudget > 0) {
-                viewModel.insertBudget(Budget(getCurrentUser(), newBudget, currentMonth))
-                etBudgetAmount.text.clear()
-                refreshExpenses(newBudget)
+                lifecycleScope.launch {
+                    viewModel.insertBudget(Budget(getCurrentUser(), newBudget, currentMonth))
+                    etBudgetAmount.text.clear()
+                    refreshExpenses(newBudget)
 
-                val remaining = newBudget - calculateTotalExpenses()
-                val status = if (remaining >= 0)
-                    "✅ Budget saved! Remaining: Rs %.2f".format(remaining)
-                else
-                    "⚠️ Over Budget by: Rs %.2f".format(-remaining)
+                    val remaining = newBudget - calculateTotalExpenses()
+                    val status = if (remaining >= 0)
+                        "✅ Budget saved! Remaining: Rs %.2f".format(remaining)
+                    else
+                        "⚠️ Over Budget by: Rs %.2f".format(-remaining)
 
-                Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@BudgetActivity, status, Toast.LENGTH_SHORT).show()
+                }
             } else {
                 etBudgetAmount.error = "❌ Please enter a valid amount"
             }
         }
-
-        refreshExpenses()
     }
 
     override fun onStart() {
@@ -109,33 +113,34 @@ class BudgetActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        refreshExpenses()
+        lifecycleScope.launch { refreshExpenses() }
     }
 
     private fun getCurrentUser(): String {
-        val sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
-        return sharedPref.getString("current_user", "Guest") ?: "Guest"
+        return getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+            .getString("current_user", "Guest") ?: "Guest"
     }
 
     private fun refreshExpenses(budget: Double? = null) {
-        val currentBudget = budget ?: runBlocking { viewModel.getBudget() }?.amount ?: 0.0
-        val totalExpenses = calculateTotalExpenses()
+        lifecycleScope.launch {
+            val currentBudget = budget ?: viewModel.getBudget()?.amount ?: 0.0
+            val totalExpenses = calculateTotalExpenses()
 
-        tvExpenses.text = "Total Expenses: Rs %.2f".format(totalExpenses)
+            tvExpenses.text = "Total Expenses: Rs %.2f".format(totalExpenses)
 
-        if (currentBudget > 0) {
-            tvCurrentBudget.text = "Current Budget: Rs %.2f".format(currentBudget)
-            updateProgress(currentBudget, totalExpenses)
-        } else {
-            tvCurrentBudget.text = "Current Budget: Not Set"
-            budgetProgressBar.progress = 0
-            tvProgressPercent.text = "0% Spent"
+            if (currentBudget > 0) {
+                tvCurrentBudget.text = "Current Budget: Rs %.2f".format(currentBudget)
+                updateProgress(currentBudget, totalExpenses)
+            } else {
+                tvCurrentBudget.text = "Current Budget: Not Set"
+                budgetProgressBar.progress = 0
+                tvProgressPercent.text = "0% Spent"
+            }
         }
     }
 
-    private fun calculateTotalExpenses(): Double {
-        val transactions = runBlocking { viewModel.allTransactions.first() }
-        return transactions
+    private suspend fun calculateTotalExpenses(): Double {
+        return viewModel.allTransactions.first()
             .filter { it.type == "Expense" && it.user == getCurrentUser() }
             .sumOf { it.amount }
             .coerceAtLeast(0.0)

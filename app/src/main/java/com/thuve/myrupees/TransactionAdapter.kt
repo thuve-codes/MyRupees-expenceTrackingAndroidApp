@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 class TransactionAdapter(
     private val transactions: MutableList<Transaction>,
-    private val onDelete: () -> Unit,
+    private val onDelete: (Transaction) -> Unit,
     private val onEdit: (Transaction, Int) -> Unit
 ) : RecyclerView.Adapter<TransactionAdapter.ViewHolder>() {
 
@@ -46,20 +46,18 @@ class TransactionAdapter(
 
         holder.deleteBtn.setOnClickListener {
             val context = holder.itemView.context
-            AlertDialog.Builder(context).setMessage("Do you want to delete?")
+            AlertDialog.Builder(context)
+                .setMessage("Do you want to delete?")
                 .setCancelable(false)
                 .setPositiveButton("Yes") { _, _ ->
-                    transactions.removeAt(position)
-                    // Assume a ViewModel or Repository call here for deletion
-                    onDelete()
-                    LocalBroadcastManager.getInstance(context).sendBroadcast(Intent("TRANSACTION_UPDATED"))
+                    onDelete(transactions[position])
                     Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
-                    notifyItemRemoved(position)
-                    notifyItemRangeChanged(position, transactions.size)
                 }
                 .setNegativeButton("No") { dialog, _ -> dialog.dismiss() }
-                .create().show()
+                .create()
+                .show()
         }
+
 
         holder.editBtn.setOnClickListener {
             onEdit(transaction, position)
@@ -68,8 +66,4 @@ class TransactionAdapter(
 
     override fun getItemCount(): Int = transactions.size
 
-//    fun updateTransaction(position: Int, updatedTransaction: Transaction) {
-//        transactions[position] = updatedTransaction
-//        notifyItemChanged(position)
-//    }
 }
