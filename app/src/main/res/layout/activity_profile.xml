@@ -14,8 +14,10 @@
         android:layout_width="155dp"
         android:layout_height="184dp"
         android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_marginStart="129dp"
+        android:layout_marginTop="0dp"
         android:layout_marginEnd="129dp"
         android:scaleType="centerCrop"
         android:src="@drawable/profileimage" />
@@ -28,7 +30,7 @@
         android:layout_marginTop="8dp"
         android:gravity="center"
         android:fontFamily="@font/arvo"
-        android:text="User Name"
+        android:text="@string/user_name"
         android:textColor="@color/black"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -41,65 +43,77 @@
         android:layout_marginTop="4dp"
         android:gravity="center"
         android:fontFamily="@font/arvo"
-        android:text="user@example.com"
+        android:text="@string/user_example_com"
         android:textColor="@color/black"
+
         android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/btnSignOut"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tvEmail"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="-225dp"
+        android:layout_marginEnd="195dp"
+        android:backgroundTint="@android:color/holo_red_light"
+        android:text="@string/sign_out"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white" />
+
 
     <EditText
         android:id="@+id/etFeedback"
         android:layout_width="match_parent"
         android:layout_height="100dp"
-        android:layout_below="@id/tvEmail"
+        android:layout_below="@+id/btnSignOut"
         android:layout_margin="16dp"
+        android:textColorHint="@color/black"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
         android:background="@android:drawable/edit_text"
         android:gravity="top|start"
-        android:hint="Enter your feedback here..."
+        android:hint="@string/enter_your_feedback_here"
         android:inputType="textMultiLine"
         android:padding="12dp"
         android:textColor="@color/black" />
 
     <Button
         android:id="@+id/btnSendFeedback"
-        android:layout_width="wrap_content"
+        android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/etFeedback"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="8dp"
         android:text="Send Feedback"
         android:textAllCaps="false"
-        android:backgroundTint="@android:color/holo_green_light"
+        android:background="@drawable/button_gradient"
         android:textColor="@android:color/white" />
 
-    <Button
-        android:id="@+id/btnSignOut"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/btnSendFeedback"
-        android:layout_margin="16dp"
-        android:backgroundTint="@android:color/holo_red_light"
-        android:text="Sign Out"
-        android:textAllCaps="false"
-        android:textColor="@android:color/white" />
 
     <TextView
         android:id="@+id/tvRecentFeedbacks"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/btnSignOut"
-        android:layout_marginTop="12dp"
+        android:layout_below="@+id/btnSendFeedback"
         android:layout_marginStart="16dp"
-        android:text="Recent Feedbacks"
-        android:textSize="20sp"
+        android:layout_marginTop="19dp"
         android:fontFamily="@font/fortwc"
-        android:textColor="@color/black" />
+        android:text="Recent Feedbacks"
+        android:textColor="@color/black"
+        android:textSize="20sp" />
 
     <ScrollView
         android:id="@+id/feedbackScroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_above="@id/bottom_navigation"
-        android:layout_below="@id/tvRecentFeedbacks"
-        android:layout_margin="8dp">
+        android:layout_below="@+id/tvRecentFeedbacks"
+        android:layout_margin="8dp"
+        android:layout_marginTop="101dp">
 
         <LinearLayout
             android:id="@+id/feedbackContainer"

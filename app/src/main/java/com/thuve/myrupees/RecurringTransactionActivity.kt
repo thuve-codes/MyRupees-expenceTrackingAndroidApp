@@ -1,6 +1,7 @@
 package com.thuve.myrupees
 
 import android.app.DatePickerDialog
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -12,9 +13,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.text.SimpleDateFormat
 import java.util.*
-import com.google.gson.Gson
-import androidx.work.*
-import java.util.concurrent.TimeUnit
 
 class RecurringTransactionActivity : AppCompatActivity() {
 
@@ -31,8 +29,6 @@ class RecurringTransactionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recurring_transactions)
-
-        // Schedule the notification worker
 
         // Initialize views
         titleInput = findViewById(R.id.titleInput)
@@ -73,8 +69,11 @@ class RecurringTransactionActivity : AppCompatActivity() {
             }
         }
 
-        // Load saved transactions
-        allTransactions.addAll(SharedPrefManager.loadRecurringTransactions(this))
+        // Load saved transactions for the current user
+        allTransactions.addAll(
+            SharedPrefManager.loadRecurringTransactions(this)
+                .filter { it.user == getCurrentUser() }
+        )
         setupAdapters()
 
         // Show date picker
@@ -128,13 +127,19 @@ class RecurringTransactionActivity : AppCompatActivity() {
                         title = title,
                         amount = amount,
                         scheduledDate = sdf.format(calendar.time),
-                        paid = false
+                        paid = false,
+                        user = getCurrentUser()
                     )
                     allTransactions.add(recurring)
                     calendar.add(Calendar.MONTH, 1)
                 }
 
-                SharedPrefManager.saveRecurringTransactions(this, allTransactions)
+                // Save all transactions, including those from other users
+                val allRecurringTransactions = SharedPrefManager.loadRecurringTransactions(this)
+                    .filter { it.user != getCurrentUser() }
+                    .toMutableList()
+                allRecurringTransactions.addAll(allTransactions)
+                SharedPrefManager.saveRecurringTransactions(this, allRecurringTransactions)
                 setupAdapters()
 
                 titleInput.text.clear()
@@ -151,6 +156,11 @@ class RecurringTransactionActivity : AppCompatActivity() {
         }
     }
 
+    private fun getCurrentUser(): String {
+        val sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+        return sharedPref.getString("current_user", "Guest") ?: "Guest"
+    }
+
     private fun setupAdapters() {
         val upcoming = allTransactions.filter { !it.paid }
         val recent = allTransactions.filter { it.paid }
@@ -162,7 +172,12 @@ class RecurringTransactionActivity : AppCompatActivity() {
             val index = allTransactions.indexOfFirst { it.id == paidItem.id }
             if (index != -1) {
                 allTransactions[index] = allTransactions[index].copy(paid = true)
-                SharedPrefManager.saveRecurringTransactions(this, allTransactions)
+                // Save all transactions, preserving those from other users
+                val allRecurringTransactions = SharedPrefManager.loadRecurringTransactions(this)
+                    .filter { it.user != getCurrentUser() }
+                    .toMutableList()
+                allRecurringTransactions.addAll(allTransactions)
+                SharedPrefManager.saveRecurringTransactions(this, allRecurringTransactions)
                 setupAdapters()
             }
         }

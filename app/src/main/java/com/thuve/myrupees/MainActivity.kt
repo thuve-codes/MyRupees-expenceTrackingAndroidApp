@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.work.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.thuve.myrupees.SharedPrefManager
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -33,13 +34,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: TransactionAdapter
     private lateinit var bottomNavigationView: BottomNavigationView
     private lateinit var balanceTextView: TextView
+    private lateinit var WelcomeTextView: TextView
+
+    // New function to get the current user from "user_preferences"
+    private fun getCurrentUser(): String {
+        val sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+        return sharedPref.getString("current_user", "Guest") ?: "Guest"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        WelcomeTextView = findViewById(R.id.welcomeUser)
+        WelcomeTextView.text = "Welcome, ${getCurrentUser()}"
+
         balanceTextView = findViewById(R.id.availableBalance)
+
+        // Load only current user's transactions
         transactionList = SharedPrefManager.loadTransactions(this)
+            .filter { it.user == getCurrentUser() }
+            .toMutableList()
 
         val recyclerView = findViewById<RecyclerView>(R.id.transactionList)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -47,7 +62,6 @@ class MainActivity : AppCompatActivity() {
             transactions = transactionList,
             onDelete = {
                 updateBalance()
-                // Notify other activities of transaction change
                 LocalBroadcastManager.getInstance(this)
                     .sendBroadcast(Intent("TRANSACTION_UPDATED"))
             },
@@ -136,11 +150,11 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 transactionList[position] = updatedTransaction
-                SharedPrefManager.saveTransactions(this, transactionList)
+                SharedPrefManager.saveTransactions(this, SharedPrefManager.loadTransactions(this).map {
+                    if (it.id == updatedTransaction.id) updatedTransaction else it
+                })
                 adapter.notifyItemChanged(position)
                 updateBalance()
-
-                // Notify other activities of transaction change
                 LocalBroadcastManager.getInstance(this)
                     .sendBroadcast(Intent("TRANSACTION_UPDATED"))
             }
@@ -158,8 +172,7 @@ class MainActivity : AppCompatActivity() {
             .setMessage("Please enter the amount:")
             .setView(editTextAmount)
             .setPositiveButton("Add") { _, _ ->
-                val amountString = editTextAmount.text.toString()
-                val amount = amountString.toDoubleOrNull() ?: 0.0
+                val amount = editTextAmount.text.toString().toDoubleOrNull() ?: 0.0
                 if (amount > 0) {
                     updateBalance(amount)
                     Toast.makeText(this, "Amount Added: Rs. $amount", Toast.LENGTH_SHORT).show()
@@ -172,17 +185,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateBalance() {
-        val balance = transactionList.sumOf {
-            if (it.type == "Income") it.amount else -it.amount
-        }
+        val balance = transactionList
+            .filter { it.user == getCurrentUser() }
+            .sumOf {
+                if (it.type == "Income") it.amount else -it.amount
+            }
         balanceTextView.text = "Rs. %.2f".format(balance)
     }
 
     private fun updateBalance(amount: Double) {
         val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val currentBalance = transactionList.sumOf {
-            if (it.type == "Income") it.amount else -it.amount
-        }
+        val currentBalance = transactionList
+            .filter { it.user == getCurrentUser() }
+            .sumOf {
+                if (it.type == "Income") it.amount else -it.amount
+            }
         val newBalance = currentBalance + amount
 
         val newTransaction = Transaction(
@@ -192,11 +209,15 @@ class MainActivity : AppCompatActivity() {
             category = "Manual",
             date = date,
             type = "Income",
-            AvaiBal = newBalance
+            AvaiBal = newBalance,
+            user = getCurrentUser()
         )
 
+        val allTransactions = SharedPrefManager.loadTransactions(this).toMutableList()
+        allTransactions.add(newTransaction)
+        SharedPrefManager.saveTransactions(this, allTransactions)
+
         transactionList.add(newTransaction)
-        SharedPrefManager.saveTransactions(this, transactionList)
         adapter.notifyItemInserted(transactionList.size - 1)
         updateBalance()
     }
@@ -204,6 +225,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         val updatedTransactions = SharedPrefManager.loadTransactions(this)
+            .filter { it.user == getCurrentUser() }
+            .toMutableList()
+
         transactionList.clear()
         transactionList.addAll(updatedTransactions)
         adapter.notifyDataSetChanged()
@@ -212,14 +236,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "MyRupeesChannel"
-            val descriptionText = "Channel for MyRupees recurring notifications"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel("MYRUPEES_CHANNEL_ID", name, importance).apply {
-                description = descriptionText
+            val channel = NotificationChannel(
+                "MYRUPEES_CHANNEL_ID",
+                "MyRupeesChannel",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Channel for MyRupees recurring notifications"
             }
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
         }
     }
 
@@ -230,13 +255,13 @@ class MainActivity : AppCompatActivity() {
 
         WorkManager.getInstance(context).enqueue(request)
 
-        val periodicWorkRequest = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
+        val periodicRequest = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
             .setInitialDelay(3, TimeUnit.SECONDS)
             .build()
 
         WorkManager.getInstance(context).getWorkInfoByIdLiveData(request.id).observe(this) { workInfo ->
             if (workInfo != null && workInfo.state.isFinished) {
-                WorkManager.getInstance(context).enqueue(periodicWorkRequest)
+                WorkManager.getInstance(context).enqueue(periodicRequest)
             }
         }
     }

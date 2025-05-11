@@ -63,6 +63,8 @@ class LoginActivity : AppCompatActivity() {
 
         val storedPassword = sharedPreferences.getString("password_$username", null)
 
+
+
         if (storedPassword != null) {
             if (password == storedPassword) {
                 // Successful login
@@ -82,6 +84,7 @@ class LoginActivity : AppCompatActivity() {
 
 
     private fun navigateToMainActivity() {
+
         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
         startActivity(Intent(this, MainActivity::class.java))
         finish()

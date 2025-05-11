@@ -28,28 +28,33 @@ class RecurringNotificationWorker(
 
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-        val upcomingList = recurringTransactions.filter { transaction ->
-            try {
-                if (transaction.paid) return@filter false
+        // Group transactions by user
+        val transactionsByUser = recurringTransactions.groupBy { it.user }
 
-                val transactionDate = dateFormat.parse(transaction.scheduledDate)
-                if (transactionDate != null) {
-                    val diff = transactionDate.time - today.timeInMillis
-                    Log.d("RecurringWorker", "Transaction '${transaction.title}' is in ${diff / DateUtils.DAY_IN_MILLIS} day(s)")
-                    diff in 0..(10 * DateUtils.DAY_IN_MILLIS)
-                } else false
-            } catch (e: Exception) {
-                e.printStackTrace()
-                false
+        transactionsByUser.forEach { (user, userTransactions) ->
+            val upcomingList = userTransactions.filter { transaction ->
+                try {
+                    if (transaction.paid) return@filter false
+
+                    val transactionDate = dateFormat.parse(transaction.scheduledDate)
+                    if (transactionDate != null) {
+                        val diff = transactionDate.time - today.timeInMillis
+                        Log.d("RecurringWorker", "Transaction '${transaction.title}' for user '$user' is in ${diff / DateUtils.DAY_IN_MILLIS} day(s)")
+                        diff in 0..(10 * DateUtils.DAY_IN_MILLIS)
+                    } else false
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
             }
-        }
 
-        if (upcomingList.isNotEmpty()) {
-            NotificationHelper.showNotification(
-                applicationContext,
-                "Upcoming Payment",
-                "You have ${upcomingList.size} unpaid recurring transaction(s) due within days."
-            )
+            if (upcomingList.isNotEmpty()) {
+                NotificationHelper.showNotification(
+                    applicationContext,
+                    "Upcoming Payment for $user",
+                    "You have ${upcomingList.size} unpaid recurring transaction(s) due within 10 days."
+                )
+            }
         }
 
         scheduleNextRun()
@@ -62,6 +67,6 @@ class RecurringNotificationWorker(
             .build()
 
         WorkManager.getInstance(applicationContext).enqueue(request)
-        Log.d("RecurringWorker", "Scheduled next run in 10 seconds")
+        Log.d("RecurringWorker", "Scheduled next run in 3 seconds")
     }
 }

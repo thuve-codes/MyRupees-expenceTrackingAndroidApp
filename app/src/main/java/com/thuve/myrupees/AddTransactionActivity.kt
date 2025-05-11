@@ -1,6 +1,7 @@
 package com.thuve.myrupees
 
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -51,6 +52,7 @@ class AddTransactionActivity : AppCompatActivity() {
             val currentBalance = transactions.sumOf { if (it.type == "Income") it.amount else -it.amount }
             val updatedBalance = if (type == "Income") currentBalance + amount else currentBalance - amount
 
+            // Create transaction with the correct username
             val transaction = Transaction(
                 UUID.randomUUID().toString(),
                 title,
@@ -58,7 +60,8 @@ class AddTransactionActivity : AppCompatActivity() {
                 category,
                 SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()),
                 type,
-                updatedBalance
+                updatedBalance,
+                getCurrentUser()
             )
 
             transactions.add(transaction)
@@ -81,9 +84,9 @@ class AddTransactionActivity : AppCompatActivity() {
             // Save to Downloads folder using MediaStore for Android 10+ (Scoped Storage)
             val fileName = "MyRupees_Transactions.txt"
             val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)  // Set file name
-                put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")  // Set MIME type
-                put(MediaStore.MediaColumns.RELATIVE_PATH, "${android.os.Environment.DIRECTORY_DOWNLOADS}")  // Save in Downloads folder
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "${android.os.Environment.DIRECTORY_DOWNLOADS}")
             }
 
             val contentResolver = contentResolver
@@ -91,7 +94,6 @@ class AddTransactionActivity : AppCompatActivity() {
 
             uri?.let {
                 try {
-                    // Open OutputStream for the file URI
                     val outputStream = contentResolver.openOutputStream(it)
                     outputStream?.use { writer ->
                         writer.write("ID, Title, Amount, Category, Date, Type, Available Balance\n".toByteArray())
@@ -100,13 +102,11 @@ class AddTransactionActivity : AppCompatActivity() {
                         }
                     }
 
-                    // Inform the user that the file has been saved
                     Toast.makeText(this, "Transactions exported to Downloads", Toast.LENGTH_SHORT).show()
 
-                    // Optionally, share the file
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
-                        putExtra(Intent.EXTRA_STREAM, it)  // File URI to share
+                        putExtra(Intent.EXTRA_STREAM, it)
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
 
@@ -141,6 +141,11 @@ class AddTransactionActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
+
+    private fun getCurrentUser(): String {
+        val sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+        return sharedPref.getString("current_user", "Guest") ?: "Guest"
     }
 
     private fun setSaveButtonColor(typeGroup: RadioGroup, saveBtn: Button) {

@@ -22,7 +22,6 @@ class BudgetActivity : AppCompatActivity() {
     private lateinit var bottomNavigationView: BottomNavigationView
 
     private val PREFS_NAME = "myrupees_prefs"
-    private val KEY_BUDGET = "monthly_budget"
     private val KEY_MONTH = "saved_month"
 
     private val transactionUpdateReceiver = object : BroadcastReceiver() {
@@ -30,6 +29,7 @@ class BudgetActivity : AppCompatActivity() {
             refreshExpenses()
         }
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_budget)
@@ -47,12 +47,12 @@ class BudgetActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val editor = prefs.edit()
 
-        // Reset budget monthly
+        // Reset budget monthly for the current user
         val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
-        val savedMonth = prefs.getInt(KEY_MONTH, -1)
+        val savedMonth = prefs.getInt("${KEY_MONTH}_${getCurrentUser()}", -1)
         if (savedMonth != currentMonth) {
-            editor.putFloat(KEY_BUDGET, 0f)
-            editor.putInt(KEY_MONTH, currentMonth)
+            editor.putFloat("budget_${getCurrentUser()}", 0f)
+            editor.putInt("${KEY_MONTH}_${getCurrentUser()}", currentMonth)
             editor.apply()
         }
 
@@ -91,7 +91,7 @@ class BudgetActivity : AppCompatActivity() {
             val newBudget = budgetInput.toDoubleOrNull()
 
             if (newBudget != null && newBudget > 0) {
-                editor.putFloat(KEY_BUDGET, newBudget.toFloat()).apply()
+                editor.putFloat("budget_${getCurrentUser()}", newBudget.toFloat()).apply()
                 etBudgetAmount.text.clear()
                 refreshExpenses(newBudget)
 
@@ -127,9 +127,14 @@ class BudgetActivity : AppCompatActivity() {
         refreshExpenses()
     }
 
+    private fun getCurrentUser(): String {
+        val sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+        return sharedPref.getString("current_user", "Guest") ?: "Guest"
+    }
+
     private fun refreshExpenses(budget: Double? = null) {
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val currentBudget = budget ?: prefs.getFloat(KEY_BUDGET, 0f).toDouble()
+        val currentBudget = budget ?: prefs.getFloat("budget_${getCurrentUser()}", 0f).toDouble()
         val totalExpenses = calculateTotalExpenses()
 
         tvExpenses.text = "Total Expenses: Rs %.2f".format(totalExpenses)
@@ -146,7 +151,8 @@ class BudgetActivity : AppCompatActivity() {
 
     private fun calculateTotalExpenses(): Double {
         val transactions = SharedPrefManager.loadTransactions(this)
-        return transactions.filter { it.type == "Expense" }
+        return transactions
+            .filter { it.type == "Expense" && it.user == getCurrentUser() }
             .sumOf { it.amount }
             .coerceAtLeast(0.0)
     }

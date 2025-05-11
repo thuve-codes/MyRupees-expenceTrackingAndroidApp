@@ -102,4 +102,13 @@ object SharedPrefManager {
             gson.fromJson(it, object : TypeToken<MutableList<RecurringTransaction>>() {}.type)
         } ?: mutableListOf()
     }
+
+    fun getCurrentUsername(context: Context): String {
+        // Retrieve the username from shared preferences
+        val username = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString("username", "Guest") // Defaulting to "Guest" if not found
+        Log.d("SharedPrefManager", "Loaded username: $username")
+        return username ?: "Guest" // In case the username is null
+    }
+
 }
