@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 
 class TransactionViewModel(private val repository: TransactionRepository) : ViewModel() {
     val allTransactions: Flow<List<Transaction>> = repository.allTransactions
-    val allRecurringTransactions: Flow<List<RecurringTransaction>> = repository.allRecurringTransactions
+    //val allRecurringTransactions: Flow<List<RecurringTransaction>> = repository.allRecurringTransactions
     val upcomingRecurringTransactions: Flow<List<RecurringTransaction>> = repository.upcomingRecurringTransactions
     val recentRecurringTransactions: Flow<List<RecurringTransaction>> = repository.recentRecurringTransactions
     val allFeedbacks: Flow<List<Feedback>> = repository.allFeedbacks
@@ -34,18 +34,19 @@ class TransactionViewModel(private val repository: TransactionRepository) : View
     fun updateRecurringTransaction(recurringTransaction: RecurringTransaction) = viewModelScope.launch {
         repository.updateRecurringTransaction(recurringTransaction)
     }
-
+/*
     fun deleteRecurringTransaction(recurringTransaction: RecurringTransaction) = viewModelScope.launch {
         repository.deleteRecurringTransaction(recurringTransaction)
     }
+    fun updateBudget(budget: Budget) = viewModelScope.launch {
+        repository.updateBudget(budget)
+    }*/
 
     fun insertBudget(budget: Budget) = viewModelScope.launch {
         repository.insertBudget(budget)
     }
 
-    fun updateBudget(budget: Budget) = viewModelScope.launch {
-        repository.updateBudget(budget)
-    }
+
 
     fun insertFeedback(feedback: Feedback) = viewModelScope.launch {
         repository.insertFeedback(feedback)

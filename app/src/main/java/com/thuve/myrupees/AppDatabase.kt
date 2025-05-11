@@ -13,17 +13,14 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
 
     companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
-
-        val MIGRATION_1_2 = object : Migration(1, 2) {
+        val MIGRATION_1_2 = object : Migration(1, 2) {//upgrade your database schema from one version to another without losing user data.
             override fun migrate(database: SupportSQLiteDatabase) {
                 Log.d("AppDatabase", "Migrating from version 1 to 2")
                 database.execSQL("CREATE TABLE IF NOT EXISTS budgets (user TEXT PRIMARY KEY NOT NULL, amount REAL NOT NULL, month INTEGER NOT NULL)")
             }
         }
 
-        fun getDatabase(context: Context): AppDatabase {
+        /*fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
@@ -43,6 +40,6 @@ abstract class AppDatabase : RoomDatabase() {
                 INSTANCE = instance
                 instance
             }
-        }
+        }*/
     }
 }

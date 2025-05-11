@@ -70,4 +70,18 @@
         android:textColor="@color/white" />
 
 
+    <TextView
+        android:layout_width="291dp"
+        android:layout_height="wrap_content"
+
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="265dp"
+        android:layout_marginEnd="95dp"
+        android:text="@string/thuvecodes"
+        android:textColor="@color/black"
+        android:textSize="10dp" />
+
+
 </RelativeLayout>

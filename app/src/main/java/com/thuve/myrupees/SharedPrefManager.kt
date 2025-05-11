@@ -8,6 +8,16 @@ import com.google.gson.reflect.TypeToken
 
 object SharedPrefManager {
     private const val PREF_NAME = "myrupees_prefs"
+
+    fun getCurrentUsername(context: Context): String {
+        // Retrieve the username from shared preferences
+        val username = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString("username", "Guest") // Defaulting to "Guest" if not found
+        Log.d("SharedPrefManager", "Loaded username: $username")
+        return username ?: "Guest" // In case the username is null
+    }
+
+    /*
     private const val KEY_TRANSACTIONS = "transactions"
 
     /* private const val KEY_BUDGET = "budget"
@@ -18,7 +28,7 @@ object SharedPrefManager {
 
     private val gson = Gson()
 
-    // --------------------- Transactions ---------------------
+     --------------------- Transactions ---------------------
     fun saveTransactions(context: Context, transactions: List<Transaction>) {
         val json = gson.toJson(transactions)
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit {
@@ -39,7 +49,7 @@ object SharedPrefManager {
 
 
 
-    /*
+
         // --------------------- Budget ---------------------
         fun setBudget(context: Context, budget: Double) {
             context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit {
@@ -79,7 +89,7 @@ object SharedPrefManager {
             Log.d("SharedPrefManager", "Loaded notification state: $prefKey = $state")
             return state
         }
-    */
+
 
 
 
@@ -102,13 +112,7 @@ object SharedPrefManager {
             gson.fromJson(it, object : TypeToken<MutableList<RecurringTransaction>>() {}.type)
         } ?: mutableListOf()
     }
+*/
 
-    fun getCurrentUsername(context: Context): String {
-        // Retrieve the username from shared preferences
-        val username = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-            .getString("username", "Guest") // Defaulting to "Guest" if not found
-        Log.d("SharedPrefManager", "Loaded username: $username")
-        return username ?: "Guest" // In case the username is null
-    }
 
 }

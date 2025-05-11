@@ -68,8 +68,8 @@ class TransactionAdapter(
 
     override fun getItemCount(): Int = transactions.size
 
-    fun updateTransaction(position: Int, updatedTransaction: Transaction) {
-        transactions[position] = updatedTransaction
-        notifyItemChanged(position)
-    }
+//    fun updateTransaction(position: Int, updatedTransaction: Transaction) {
+//        transactions[position] = updatedTransaction
+//        notifyItemChanged(position)
+//    }
 }
