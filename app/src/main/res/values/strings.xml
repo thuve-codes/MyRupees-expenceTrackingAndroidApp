@@ -33,4 +33,18 @@
     <string name="_0_spent">0% Spent</string>
     <string name="Edit">Edit</string>
     <string name="edit">Edit</string>
+    <string name="enter_your_feedback_here">Enter your feedback here...</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="user_example_com">user@example.com</string>
+    <string name="user_name">User Name</string>
+    <string name="create_your_account">Create Your Account</string>
+    <string name="enter_email">Enter Email</string>
+    <string name="enter_username">Enter Username</string>
+    <string name="enter_password">Enter password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="i_agree_to_the_terms_and_conditions">I agree to the Terms And Conditions</string>
+    <string name="create_account">Create Account</string>
+    <string name="already_have_an_account">Already have an account?</string>
+    <string name="login">Login</string>
+    <string name="don_t_have_an_account_register">Don\'t have an account? Register</string>
 </resources>
