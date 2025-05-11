@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/material_dynamic_neutral10">
+
+    <ImageView
+        android:layout_marginTop="80dp"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="150dp"
+        android:src="@drawable/mylogo" />
+
+    <EditText
+        android:id="@+id/entersid"
+        android:layout_width="233dp"
+        android:layout_height="41dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:hint="Enter Username"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        />
+
+    <EditText
+        android:id="@+id/enterpassword"
+        android:inputType="textPassword"
+        android:layout_width="233dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:hint="Enter Password"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white" />
+    <TextView
+        android:id="@+id/error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="                                          "
+        android:textColor="#FF0000"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:id="@+id/loginbtn"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:text="Login"
+        android:textColor="@color/white"
+        android:background="@color/material_dynamic_primary10"
+        />
+
+
+    <Button
+        android:id="@+id/regbtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="150dp"
+        android:background="#006200EE"
+        android:clickable="true"
+        android:focusable="true"
+        android:text="Don't have an account? Register"
+        android:textColor="@color/white" />
+</LinearLayout>

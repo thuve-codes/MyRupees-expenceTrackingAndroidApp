@@ -25,5 +25,10 @@
         android:icon="@drawable/ic_recurring"
         android:title="Recurring"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_user"
+        android:title="Profile"
+        app:showAsAction="ifRoom" />
 
 </menu>

@@ -7,6 +7,9 @@ plugins {
 android {
     namespace = "com.thuve.myrupees"
     compileSdk = 35
+    buildFeatures {
+        viewBinding = true
+    }
 
     defaultConfig {
         applicationId = "com.thuve.myrupees"

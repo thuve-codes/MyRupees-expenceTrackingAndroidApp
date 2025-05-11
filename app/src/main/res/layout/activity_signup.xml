@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/material_dynamic_neutral10">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/mylogo" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create Your Account"
+        android:textSize="30dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="30dp"
+        android:textColor="@color/white"/>
+    <EditText
+        android:id="@+id/sid"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:hint="Enter Email"
+        android:inputType="text"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        android:layout_gravity="center"
+        />
+    <EditText
+        android:id="@+id/un"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="Enter Username"
+        android:inputType="text"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        android:layout_gravity="center"
+        />
+
+    <EditText
+        android:id="@+id/pwd"
+        android:inputType="textPassword"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="Enter password"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        android:layout_gravity="center"
+
+        />
+    <EditText
+        android:id="@+id/rpwd"
+        android:inputType="textPassword"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="Confirm password"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        android:layout_gravity="center"
+        />
+    <CheckBox
+        android:id="@+id/terms"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="I agree to the Terms And Conditions"
+        android:textColor="@color/white"
+        android:layout_marginTop="10dp"
+        android:layout_gravity="center"
+        />
+    <TextView
+        android:id="@+id/Errortxt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="                 "
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:textColor="#FF0000"
+        />
+    <Button
+        android:id="@+id/createbtn"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="Create Account"
+        android:textColor="@color/white"
+        android:background="@color/design_default_color_primary"
+        android:layout_gravity="center"/>
+
+    <!-- Already have an account -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Already have an account?"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:id="@+id/loginText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Login"
+            android:textSize="14sp"
+            android:clickable="true" />
+    </LinearLayout>
+</LinearLayout>

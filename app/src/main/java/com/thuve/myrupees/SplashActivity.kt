@@ -13,7 +13,7 @@ class SplashActivity : AppCompatActivity() {
 
         val getStartedButton: Button = findViewById(R.id.getstart)
         getStartedButton.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, LoginActivity::class.java))
             finish() // Optional: Finish SplashActivity so it's removed from the back stack
         }
     }

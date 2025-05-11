@@ -82,6 +82,10 @@ class MainActivity : AppCompatActivity() {
                     startActivity(Intent(this, RecurringTransactionActivity::class.java))
                     true
                 }
+                R.id.nav_profile -> {
+                    startActivity(Intent(this, RecurringTransactionActivity::class.java))
+                    true
+                }
                 else -> false
             }
         }
