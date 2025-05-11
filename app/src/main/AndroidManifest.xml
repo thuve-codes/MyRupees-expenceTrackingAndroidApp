@@ -36,6 +36,7 @@
         <!-- Authentication Activities -->
         <activity android:name="com.thuve.myrupeess.SignupActivity" />
         <activity android:name=".LoginActivity"/>
+        <activity android:name=".ProfileActivity"/>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

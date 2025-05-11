@@ -134,6 +134,10 @@ class AddTransactionActivity : AppCompatActivity() {
                     startActivity(Intent(this, RecurringTransactionActivity::class.java))
                     true
                 }
+                R.id.nav_profile -> {
+                    startActivity(Intent(this, ProfileActivity::class.java))
+                    true
+                }
                 else -> false
             }
         }
