@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -20,13 +21,16 @@ import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.work.*
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.thuve.myrupees.SharedPrefManager
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,9 +38,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: TransactionAdapter
     private lateinit var bottomNavigationView: BottomNavigationView
     private lateinit var balanceTextView: TextView
-    private lateinit var WelcomeTextView: TextView
+    private lateinit var welcomeTextView: TextView
+    private val viewModel: TransactionViewModel by viewModels { TransactionViewModelFactory(this, getCurrentUser()) }
 
-    // New function to get the current user from "user_preferences"
     private fun getCurrentUser(): String {
         val sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
         return sharedPref.getString("current_user", "Guest") ?: "Guest"
@@ -46,15 +50,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        WelcomeTextView = findViewById(R.id.welcomeUser)
-        WelcomeTextView.text = "Welcome, ${getCurrentUser()}"
+        lifecycleScope.launch {
+            migrateSharedPrefsToRoom(this@MainActivity, DatabaseProvider.getDatabase(this@MainActivity).transactionDao())
+        }
+
+        welcomeTextView = findViewById(R.id.welcomeUser)
+        welcomeTextView.text = "Welcome, ${getCurrentUser()}"
 
         balanceTextView = findViewById(R.id.availableBalance)
-
-        // Load only current user's transactions
-        transactionList = SharedPrefManager.loadTransactions(this)
-            .filter { it.user == getCurrentUser() }
-            .toMutableList()
+        transactionList = mutableListOf()
 
         val recyclerView = findViewById<RecyclerView>(R.id.transactionList)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -62,14 +66,22 @@ class MainActivity : AppCompatActivity() {
             transactions = transactionList,
             onDelete = {
                 updateBalance()
-                LocalBroadcastManager.getInstance(this)
-                    .sendBroadcast(Intent("TRANSACTION_UPDATED"))
+                LocalBroadcastManager.getInstance(this).sendBroadcast(Intent("TRANSACTION_UPDATED"))
             },
             onEdit = { transaction, position ->
                 showEditDialog(transaction, position)
             }
         )
         recyclerView.adapter = adapter
+
+        lifecycleScope.launch {
+            viewModel.allTransactions.collectLatest { transactions ->
+                transactionList.clear()
+                transactionList.addAll(transactions)
+                adapter.notifyDataSetChanged()
+                updateBalance()
+            }
+        }
 
         findViewById<FloatingActionButton>(R.id.addBtn).setOnClickListener {
             startActivity(Intent(this, AddTransactionActivity::class.java))
@@ -84,22 +96,10 @@ class MainActivity : AppCompatActivity() {
             }.start()
 
             when (menuItem.itemId) {
-                R.id.nav_budget -> {
-                    startActivity(Intent(this, BudgetActivity::class.java))
-                    true
-                }
-                R.id.nav_add -> {
-                    startActivity(Intent(this, AddTransactionActivity::class.java))
-                    true
-                }
-                R.id.nav_recurring -> {
-                    startActivity(Intent(this, RecurringTransactionActivity::class.java))
-                    true
-                }
-                R.id.nav_profile -> {
-                    startActivity(Intent(this, ProfileActivity::class.java))
-                    true
-                }
+                R.id.nav_budget -> { startActivity(Intent(this, BudgetActivity::class.java)); true }
+                R.id.nav_add -> { startActivity(Intent(this, AddTransactionActivity::class.java)); true }
+                R.id.nav_recurring -> { startActivity(Intent(this, RecurringTransactionActivity::class.java)); true }
+                R.id.nav_profile -> { startActivity(Intent(this, ProfileActivity::class.java)); true }
                 else -> false
             }
         }
@@ -111,7 +111,6 @@ class MainActivity : AppCompatActivity() {
         createNotificationChannel()
         scheduleRecurringNotificationWorker(this)
         requestNotificationPermission()
-        updateBalance()
     }
 
     private fun showEditDialog(transaction: Transaction, position: Int) {
@@ -122,11 +121,7 @@ class MainActivity : AppCompatActivity() {
         dialogView.findViewById<EditText>(R.id.editCategory).setText(transaction.category)
 
         val typeRadioGroup = dialogView.findViewById<RadioGroup>(R.id.typeRadioGroup)
-        if (transaction.type == "Income") {
-            typeRadioGroup.check(R.id.incomeRadio)
-        } else {
-            typeRadioGroup.check(R.id.expenseRadio)
-        }
+        if (transaction.type == "Income") typeRadioGroup.check(R.id.incomeRadio) else typeRadioGroup.check(R.id.expenseRadio)
 
         AlertDialog.Builder(this)
             .setTitle("Edit Transaction")
@@ -142,21 +137,9 @@ class MainActivity : AppCompatActivity() {
                     return@setPositiveButton
                 }
 
-                val updatedTransaction = transaction.copy(
-                    title = title,
-                    amount = amount,
-                    category = category,
-                    type = type
-                )
-
-                transactionList[position] = updatedTransaction
-                SharedPrefManager.saveTransactions(this, SharedPrefManager.loadTransactions(this).map {
-                    if (it.id == updatedTransaction.id) updatedTransaction else it
-                })
-                adapter.notifyItemChanged(position)
-                updateBalance()
-                LocalBroadcastManager.getInstance(this)
-                    .sendBroadcast(Intent("TRANSACTION_UPDATED"))
+                val updatedTransaction = transaction.copy(title = title, amount = amount, category = category, type = type)
+                viewModel.updateTransaction(updatedTransaction)
+                LocalBroadcastManager.getInstance(this).sendBroadcast(Intent("TRANSACTION_UPDATED"))
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -185,53 +168,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateBalance() {
-        val balance = transactionList
-            .filter { it.user == getCurrentUser() }
-            .sumOf {
-                if (it.type == "Income") it.amount else -it.amount
-            }
+        val balance = transactionList.sumOf { if (it.type == "Income") it.amount else -it.amount }
         balanceTextView.text = "Rs. %.2f".format(balance)
     }
 
     private fun updateBalance(amount: Double) {
         val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val currentBalance = transactionList
-            .filter { it.user == getCurrentUser() }
-            .sumOf {
-                if (it.type == "Income") it.amount else -it.amount
-            }
+        val currentBalance = transactionList.sumOf { if (it.type == "Income") it.amount else -it.amount }
         val newBalance = currentBalance + amount
 
         val newTransaction = Transaction(
-            id = UUID.randomUUID().toString(),
             title = "Manual Add",
             amount = amount,
             category = "Manual",
             date = date,
             type = "Income",
-            AvaiBal = newBalance,
+            avaiBal = newBalance,
             user = getCurrentUser()
         )
 
-        val allTransactions = SharedPrefManager.loadTransactions(this).toMutableList()
-        allTransactions.add(newTransaction)
-        SharedPrefManager.saveTransactions(this, allTransactions)
-
-        transactionList.add(newTransaction)
-        adapter.notifyItemInserted(transactionList.size - 1)
-        updateBalance()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val updatedTransactions = SharedPrefManager.loadTransactions(this)
-            .filter { it.user == getCurrentUser() }
-            .toMutableList()
-
-        transactionList.clear()
-        transactionList.addAll(updatedTransactions)
-        adapter.notifyDataSetChanged()
-        updateBalance()
+        viewModel.insertTransaction(newTransaction)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(Intent("TRANSACTION_UPDATED"))
     }
 
     private fun createNotificationChannel() {
@@ -240,9 +197,7 @@ class MainActivity : AppCompatActivity() {
                 "MYRUPEES_CHANNEL_ID",
                 "MyRupeesChannel",
                 NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Channel for MyRupees recurring notifications"
-            }
+            ).apply { description = "Channel for MyRupees recurring notifications" }
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
         }
@@ -268,14 +223,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    1001
-                )
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
             }
         }
     }

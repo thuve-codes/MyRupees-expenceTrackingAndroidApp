@@ -8,11 +8,15 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.*
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.runBlocking
 
 class AddTransactionActivity : AppCompatActivity() {
 
@@ -20,6 +24,7 @@ class AddTransactionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_transaction)
+        val viewModel: TransactionViewModel by viewModels { TransactionViewModelFactory(this, getCurrentUser()) }
 
         val titleInput = findViewById<EditText>(R.id.titleInput)
         val amountInput = findViewById<EditText>(R.id.amountInput)
@@ -28,7 +33,6 @@ class AddTransactionActivity : AppCompatActivity() {
         val saveBtn = findViewById<Button>(R.id.saveBtn)
         val exportBtn = findViewById<Button>(R.id.exportButton)
 
-        // Set up category spinner
         val categories = listOf("Food", "Transport", "Entertainment", "Shopping", "Savings", "Others")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -48,40 +52,36 @@ class AddTransactionActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val transactions = SharedPrefManager.loadTransactions(this)
+            val transactions = runBlocking { viewModel.allTransactions.first() }
             val currentBalance = transactions.sumOf { if (it.type == "Income") it.amount else -it.amount }
             val updatedBalance = if (type == "Income") currentBalance + amount else currentBalance - amount
 
-            // Create transaction with the correct username
             val transaction = Transaction(
-                UUID.randomUUID().toString(),
-                title,
-                amount,
-                category,
-                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()),
-                type,
-                updatedBalance,
-                getCurrentUser()
+                title = title,
+                amount = amount,
+                category = category,
+                date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()),
+                type = type,
+                avaiBal = updatedBalance,
+                user = getCurrentUser()
             )
 
-            transactions.add(transaction)
-            SharedPrefManager.saveTransactions(this, transactions)
+            viewModel.insertTransaction(transaction)
+            LocalBroadcastManager.getInstance(this).sendBroadcast(Intent("TRANSACTION_UPDATED"))
 
             Toast.makeText(this, "Transaction saved", Toast.LENGTH_SHORT).show()
             startActivity(Intent(this, MainActivity::class.java))
             finish()
         }
 
-        // Export and share functionality
         exportBtn.setOnClickListener {
-            val transactions = SharedPrefManager.loadTransactions(this)
+            val transactions = runBlocking { viewModel.allTransactions.first() }
 
             if (transactions.isEmpty()) {
                 Toast.makeText(this, "No transactions to export", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Save to Downloads folder using MediaStore for Android 10+ (Scoped Storage)
             val fileName = "MyRupees_Transactions.txt"
             val contentValues = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
@@ -98,7 +98,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     outputStream?.use { writer ->
                         writer.write("ID, Title, Amount, Category, Date, Type, Available Balance\n".toByteArray())
                         for (t in transactions) {
-                            writer.write("${t.id}, ${t.title}, ${t.amount}, ${t.category}, ${t.date}, ${t.type}, ${t.AvaiBal}\n".toByteArray())
+                            writer.write("${t.id}, ${t.title}, ${t.amount}, ${t.category}, ${t.date}, ${t.type}, ${t.avaiBal}\n".toByteArray())
                         }
                     }
 
@@ -117,27 +117,14 @@ class AddTransactionActivity : AppCompatActivity() {
             }
         }
 
-        // Bottom navigation
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.selectedItemId = R.id.nav_add
         bottomNav.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.nav_home -> {
-                    startActivity(Intent(this, MainActivity::class.java))
-                    true
-                }
-                R.id.nav_budget -> {
-                    startActivity(Intent(this, BudgetActivity::class.java))
-                    true
-                }
-                R.id.nav_recurring -> {
-                    startActivity(Intent(this, RecurringTransactionActivity::class.java))
-                    true
-                }
-                R.id.nav_profile -> {
-                    startActivity(Intent(this, ProfileActivity::class.java))
-                    true
-                }
+                R.id.nav_home -> { startActivity(Intent(this, MainActivity::class.java)); true }
+                R.id.nav_budget -> { startActivity(Intent(this, BudgetActivity::class.java)); true }
+                R.id.nav_recurring -> { startActivity(Intent(this, RecurringTransactionActivity::class.java)); true }
+                R.id.nav_profile -> { startActivity(Intent(this, ProfileActivity::class.java)); true }
                 else -> false
             }
         }

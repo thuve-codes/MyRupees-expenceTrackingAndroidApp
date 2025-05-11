@@ -2,14 +2,20 @@ package com.thuve.myrupees
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.flow.first
 import java.util.*
+import kotlinx.coroutines.runBlocking
 
 class BudgetActivity : AppCompatActivity() {
 
@@ -20,9 +26,7 @@ class BudgetActivity : AppCompatActivity() {
     private lateinit var budgetProgressBar: ProgressBar
     private lateinit var tvProgressPercent: TextView
     private lateinit var bottomNavigationView: BottomNavigationView
-
-    private val PREFS_NAME = "myrupees_prefs"
-    private val KEY_MONTH = "saved_month"
+    private val viewModel: TransactionViewModel by viewModels { TransactionViewModelFactory(this, getCurrentUser()) }
 
     private val transactionUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -44,19 +48,12 @@ class BudgetActivity : AppCompatActivity() {
 
         createNotificationChannel()
 
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val editor = prefs.edit()
-
-        // Reset budget monthly for the current user
         val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
-        val savedMonth = prefs.getInt("${KEY_MONTH}_${getCurrentUser()}", -1)
-        if (savedMonth != currentMonth) {
-            editor.putFloat("budget_${getCurrentUser()}", 0f)
-            editor.putInt("${KEY_MONTH}_${getCurrentUser()}", currentMonth)
-            editor.apply()
+        val savedBudget = runBlocking { viewModel.getBudget() }
+        if (savedBudget?.month != currentMonth) {
+            runBlocking { viewModel.insertBudget(Budget(getCurrentUser(), 0.0, currentMonth)) }
         }
 
-        // Bottom navigation setup
         bottomNavigationView.selectedItemId = R.id.nav_budget
         bottomNavigationView.setOnItemSelectedListener { menuItem ->
             val view = bottomNavigationView.findViewById<View>(menuItem.itemId)
@@ -65,23 +62,11 @@ class BudgetActivity : AppCompatActivity() {
             }.start()
 
             when (menuItem.itemId) {
-                R.id.nav_home -> {
-                    startActivity(Intent(this, MainActivity::class.java))
-                    true
-                }
+                R.id.nav_home -> { startActivity(Intent(this, MainActivity::class.java)); true }
                 R.id.nav_budget -> true
-                R.id.nav_add -> {
-                    startActivity(Intent(this, AddTransactionActivity::class.java))
-                    true
-                }
-                R.id.nav_recurring -> {
-                    startActivity(Intent(this, RecurringTransactionActivity::class.java))
-                    true
-                }
-                R.id.nav_profile -> {
-                    startActivity(Intent(this, ProfileActivity::class.java))
-                    true
-                }
+                R.id.nav_add -> { startActivity(Intent(this, AddTransactionActivity::class.java)); true }
+                R.id.nav_recurring -> { startActivity(Intent(this, RecurringTransactionActivity::class.java)); true }
+                R.id.nav_profile -> { startActivity(Intent(this, ProfileActivity::class.java)); true }
                 else -> false
             }
         }
@@ -91,7 +76,7 @@ class BudgetActivity : AppCompatActivity() {
             val newBudget = budgetInput.toDoubleOrNull()
 
             if (newBudget != null && newBudget > 0) {
-                editor.putFloat("budget_${getCurrentUser()}", newBudget.toFloat()).apply()
+                viewModel.insertBudget(Budget(getCurrentUser(), newBudget, currentMonth))
                 etBudgetAmount.text.clear()
                 refreshExpenses(newBudget)
 
@@ -133,8 +118,7 @@ class BudgetActivity : AppCompatActivity() {
     }
 
     private fun refreshExpenses(budget: Double? = null) {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val currentBudget = budget ?: prefs.getFloat("budget_${getCurrentUser()}", 0f).toDouble()
+        val currentBudget = budget ?: runBlocking { viewModel.getBudget() }?.amount ?: 0.0
         val totalExpenses = calculateTotalExpenses()
 
         tvExpenses.text = "Total Expenses: Rs %.2f".format(totalExpenses)
@@ -150,7 +134,7 @@ class BudgetActivity : AppCompatActivity() {
     }
 
     private fun calculateTotalExpenses(): Double {
-        val transactions = SharedPrefManager.loadTransactions(this)
+        val transactions = runBlocking { viewModel.allTransactions.first() }
         return transactions
             .filter { it.type == "Expense" && it.user == getCurrentUser() }
             .sumOf { it.amount }
@@ -162,11 +146,7 @@ class BudgetActivity : AppCompatActivity() {
         val displayPercent = percentSpent.coerceAtMost(100)
 
         budgetProgressBar.progress = displayPercent
-        tvProgressPercent.text = if (percentSpent > 100) {
-            "100%+ Spent"
-        } else {
-            "$displayPercent% Spent"
-        }
+        tvProgressPercent.text = if (percentSpent > 100) "100%+ Spent" else "$displayPercent% Spent"
 
         if (percentSpent in 90..99) {
             NotificationHelper.showNotification(
@@ -190,9 +170,7 @@ class BudgetActivity : AppCompatActivity() {
                 "budget_channel",
                 "Budget Alerts",
                 NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifies when budget usage is high or exceeded"
-            }
+            ).apply { description = "Notifies when budget usage is high or exceeded" }
 
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)

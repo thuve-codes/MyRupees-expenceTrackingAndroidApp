@@ -3,13 +3,15 @@ package com.thuve.myrupees
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.Button
+import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 
 class RecurringAdapter(
-    private val transactions: MutableList<RecurringTransaction>,
     private val onPaidClick: ((RecurringTransaction) -> Unit)?
-) : RecyclerView.Adapter<RecurringAdapter.ViewHolder>() {
+) : ListAdapter<RecurringTransaction, RecurringAdapter.ViewHolder>(DiffCallback()) {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val title: TextView = itemView.findViewById(R.id.titleText)
@@ -25,7 +27,7 @@ class RecurringAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val transaction = transactions[position]
+        val transaction = getItem(position)
         holder.title.text = transaction.title
         holder.amount.text = "Rs. %.2f".format(transaction.amount)
         holder.date.text = transaction.scheduledDate
@@ -35,12 +37,18 @@ class RecurringAdapter(
         } else {
             holder.paidBtn.visibility = View.VISIBLE
             holder.paidBtn.setOnClickListener {
-                transaction.paid = true
-                notifyItemChanged(position)
-                onPaidClick.invoke(transaction)
+                onPaidClick?.invoke(transaction.copy(paid = true))
             }
         }
     }
 
-    override fun getItemCount() = transactions.size
+    class DiffCallback : DiffUtil.ItemCallback<RecurringTransaction>() {
+        override fun areItemsTheSame(oldItem: RecurringTransaction, newItem: RecurringTransaction): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: RecurringTransaction, newItem: RecurringTransaction): Boolean {
+            return oldItem == newItem
+        }
+    }
 }

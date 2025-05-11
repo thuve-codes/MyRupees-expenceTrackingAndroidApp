@@ -3,7 +3,10 @@ package com.thuve.myrupees
 import android.content.Context
 import android.text.format.DateUtils
 import android.util.Log
-import androidx.work.*
+import androidx.work.CoroutineWorker
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
+import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -11,13 +14,13 @@ import java.util.concurrent.TimeUnit
 class RecurringNotificationWorker(
     appContext: Context,
     workerParams: WorkerParameters
-) : Worker(appContext, workerParams) {
+) : CoroutineWorker(appContext, workerParams) {
 
-    override fun doWork(): Result {
+    override suspend fun doWork(): Result {
         Log.d("RecurringWorker", "Worker started")
-
-        val recurringTransactions = SharedPrefManager.loadRecurringTransactions(applicationContext)
-        Log.d("RecurringWorker", "Loaded ${recurringTransactions.size} recurring transactions")
+        val dao = DatabaseProvider.getDatabase(applicationContext).transactionDao()
+        val user = SharedPrefManager.getCurrentUsername(applicationContext)
+        val recurringTransactions = dao.getAllRecurringTransactions(user).first()
 
         val today = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
@@ -25,36 +28,22 @@ class RecurringNotificationWorker(
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
-
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-        // Group transactions by user
-        val transactionsByUser = recurringTransactions.groupBy { it.user }
+        val upcomingList = recurringTransactions.filter { !it.paid }.filter { transaction ->
+            val transactionDate = dateFormat.parse(transaction.scheduledDate)
+            transactionDate?.let { date ->
+                val diff = date.time - today.timeInMillis
+                diff in 0..(10 * DateUtils.DAY_IN_MILLIS)
+            } ?: false
+        }
 
-        transactionsByUser.forEach { (user, userTransactions) ->
-            val upcomingList = userTransactions.filter { transaction ->
-                try {
-                    if (transaction.paid) return@filter false
-
-                    val transactionDate = dateFormat.parse(transaction.scheduledDate)
-                    if (transactionDate != null) {
-                        val diff = transactionDate.time - today.timeInMillis
-                        Log.d("RecurringWorker", "Transaction '${transaction.title}' for user '$user' is in ${diff / DateUtils.DAY_IN_MILLIS} day(s)")
-                        diff in 0..(10 * DateUtils.DAY_IN_MILLIS)
-                    } else false
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
-            }
-
-            if (upcomingList.isNotEmpty()) {
-                NotificationHelper.showNotification(
-                    applicationContext,
-                    "Upcoming Payment for $user",
-                    "You have ${upcomingList.size} unpaid recurring transaction(s) due within 10 days."
-                )
-            }
+        if (upcomingList.isNotEmpty()) {
+            NotificationHelper.showNotification(
+                applicationContext,
+                "Upcoming Payment for $user",
+                "You have ${upcomingList.size} unpaid recurring transaction(s) due within 10 days."
+            )
         }
 
         scheduleNextRun()
@@ -62,10 +51,9 @@ class RecurringNotificationWorker(
     }
 
     private fun scheduleNextRun() {
-        val request = OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
+        val request = androidx.work.OneTimeWorkRequestBuilder<RecurringNotificationWorker>()
             .setInitialDelay(3, TimeUnit.SECONDS)
             .build()
-
         WorkManager.getInstance(applicationContext).enqueue(request)
         Log.d("RecurringWorker", "Scheduled next run in 3 seconds")
     }
