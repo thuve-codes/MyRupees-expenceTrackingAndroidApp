@@ -60,36 +60,26 @@ class LoginActivity : AppCompatActivity() {
 
     private fun authenticateUser(username: String, password: String) {
         val sharedPreferences = getSharedPreferences(sharedPrefFile, Context.MODE_PRIVATE)
-        val allEntries = sharedPreferences.all
 
-        var userFound = false
+        val storedPassword = sharedPreferences.getString("password_$username", null)
 
-        for ((key, value) in allEntries) {
-            if (key.startsWith("username_") && value == username) {
-                userFound = true
-                val email = key.removePrefix("username_")
-                val storedPassword = sharedPreferences.getString("password_$email", "")
-
-                if (password == storedPassword) {
-                    // Successful login
-                    sharedPreferences.edit().apply {
-                        putBoolean("is_logged_in", true)
-                        putString("current_user", username)
-                        apply()
-                    }
-                    navigateToMainActivity()
-                    return
-                } else {
-                    binding.error.text = "Incorrect password"
-                    return
+        if (storedPassword != null) {
+            if (password == storedPassword) {
+                // Successful login
+                sharedPreferences.edit().apply {
+                    putBoolean("is_logged_in", true)
+                    putString("current_user", username)
+                    apply()
                 }
+                navigateToMainActivity()
+            } else {
+                binding.error.text = "Incorrect password"
             }
-        }
-
-        if (!userFound) {
+        } else {
             binding.error.text = "Username not found"
         }
     }
+
 
     private fun navigateToMainActivity() {
         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()

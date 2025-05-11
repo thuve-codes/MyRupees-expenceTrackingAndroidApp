@@ -108,17 +108,16 @@ class SignupActivity : AppCompatActivity() {
         val sharedPreferences = getSharedPreferences(sharedPrefFile, Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
-        // Check if email already exists
-        val existingEmail = sharedPreferences.getString("email_$email", null)
-        if (existingEmail != null) {
-            binding.Errortxt.text = "Email already registered"
+        // Check if username already exists
+        val existingUser = sharedPreferences.getString("password_$username", null)
+        if (existingUser != null) {
+            binding.Errortxt.text = "Username already taken"
             return
         }
 
-        // Store user data
-        editor.putString("email_$email", email)
-        editor.putString("username_$email", username)
-        editor.putString("password_$email", password)
+        // Store user data by username
+        editor.putString("email_$username", email)
+        editor.putString("password_$username", password)
         editor.putBoolean("is_logged_in", false)
         editor.apply()
 
@@ -126,4 +125,5 @@ class SignupActivity : AppCompatActivity() {
         startActivity(Intent(this, LoginActivity::class.java))
         finish()
     }
+
 }
